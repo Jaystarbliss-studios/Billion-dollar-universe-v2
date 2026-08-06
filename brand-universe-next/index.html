@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industry World — Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold:#C6A85E; --cyan:#4ECAFF; --green:#00F5A0; }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        body{overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif}
+        #loading{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:3000;transition:opacity 0.6s ease}
+        #loading.hidden{opacity:0;pointer-events:none}
+        .ld-ring{width:42px;height:42px;border-radius:50%;border:2px solid rgba(198,168,94,0.2);border-top-color:var(--gold);animation:spin .9s linear infinite}
+        .ld-title{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:4px;color:var(--gold)}
+        .ld-sub{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        #canvas-container{position:fixed;inset:0}
+        #topbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:800;background:linear-gradient(180deg,rgba(2,6,16,0.9) 0%,transparent 100%)}
+        .topbar-left{display:flex;align-items:center;gap:10px}
+        .topbar-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2.5px;color:#fff;opacity:0.85;white-space:nowrap}
+        .topbar-right{display:flex;align-items:center;gap:10px}
+        .user-avatar{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--gold);object-fit:cover}
+        .user-name{font-family:'Orbitron',monospace;font-size:9px;color:var(--gold);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        #menu-btn{width:34px;height:34px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4.5px;cursor:pointer;transition:all 0.2s}
+        #menu-btn:hover{background:rgba(198,168,94,0.12);border-color:rgba(198,168,94,0.36)}
+        #menu-btn span{display:block;width:15px;height:1.5px;background:#fff;border-radius:2px;transition:all 0.24s}
+        #menu-btn.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+        #menu-btn.open span:nth-child(2){opacity:0}
+        #menu-btn.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+        #back-btn{position:fixed;top:14px;left:20px;z-index:900;display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;background:rgba(4,10,22,0.7);backdrop-filter:blur(12px);border:1px solid rgba(198,168,94,0.3);border-radius:6px;color:var(--gold);font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1.5px;transition:all 0.2s}
+        #back-btn:hover{background:rgba(198,168,94,0.12);border-color:rgba(198,168,94,0.55)}
+        #world-hud{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:700;text-align:center;pointer-events:none;opacity:0;transition:opacity 0.6s ease}
+        #world-hud.show{opacity:1}
+        .whud-tag{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:rgba(198,168,94,0.5);margin-bottom:4px}
+        .whud-name{font-family:'Rajdhani',sans-serif;font-size:clamp(22px,4vw,40px);font-weight:700;color:#fff;letter-spacing:2px;text-shadow:0 0 30px rgba(198,168,94,0.4)}
+        .whud-bar{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin-top:6px}
+
+        /* ─── SLOT PROGRESS BAR ─── */
+        #slot-progress{position:fixed;top:116px;left:50%;transform:translateX(-50%);z-index:700;min-width:260px;max-width:340px;opacity:0;transition:opacity 0.6s ease;pointer-events:none}
+        #slot-progress.show{opacity:1}
+        .sp-prog-inner{background:rgba(4,10,22,0.75);backdrop-filter:blur(14px);border:1px solid rgba(198,168,94,0.2);border-radius:20px;padding:7px 16px}
+        .sp-prog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+        .sp-prog-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1.5px;color:rgba(198,168,94,0.55)}
+        .sp-prog-count{font-family:'Space Mono',monospace;font-size:9px;color:var(--gold)}
+        .sp-prog-track{width:100%;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+        .sp-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),#fff8a0,var(--gold));background-size:200% 100%;animation:scan 2s linear infinite;transition:width 0.8s ease;width:0%}
+        @keyframes scan{0%{background-position:-200% center}100%{background-position:200% center}}
+        @media (min-width: 1024px) {
+            #slot-progress { top: 145px; }
+        }
+
+        /* ─── SLOT PANEL ─── */
+        #slot-panel{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);z-index:900;min-width:300px;max-width:380px;opacity:0;pointer-events:none;transition:opacity 0.3s ease,transform 0.3s ease}
+        #slot-panel.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all}
+        .sp-inner{background:linear-gradient(135deg,rgba(4,10,24,0.97),rgba(6,16,36,0.95));backdrop-filter:blur(20px);border-radius:10px;border:1px solid rgba(198,168,94,0.35);box-shadow:0 0 0 1px rgba(198,168,94,0.08),0 16px 50px rgba(0,0,0,0.7),0 0 40px rgba(198,168,94,0.1);overflow:hidden}
+        .sp-bar{height:2px;background:linear-gradient(90deg,transparent,var(--gold),#fff8e1,var(--gold),transparent);background-size:200% 100%;animation:scan 2.5s linear infinite}
+        .sp-body{padding:16px 20px 18px}
+        .sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+        .sp-tag{font-family:'Orbitron',monospace;font-size:7.5px;letter-spacing:2.5px;color:rgba(198,168,94,0.55)}
+        .sp-close{color:rgba(255,255,255,0.25);cursor:pointer;font-size:14px;transition:color 0.2s;padding:0 2px}
+        .sp-close:hover{color:rgba(255,255,255,0.7)}
+        .sp-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;margin:6px 0 10px;letter-spacing:0.5px}
+        .sp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+        .sp-stat{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:5px;padding:8px 10px}
+        .sp-stat-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1.5px;color:rgba(180,210,230,0.4);margin-bottom:3px}
+        .sp-stat-val{font-family:'Space Mono',monospace;font-size:13px;color:#fff;font-weight:700}
+        .sp-stat-val.gold{color:var(--gold)}.sp-stat-val.cyan{color:var(--cyan)}.sp-stat-val.green{color:var(--green)}
+        .sp-btn{width:100%;padding:12px;border:none;border-radius:7px;cursor:pointer;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:2px;transition:all 0.2s}
+        .sp-btn.buy{background:linear-gradient(135deg,#C6A85E,#a88840);color:#000}
+        .sp-btn.buy:hover{background:linear-gradient(135deg,#d4b96e,#C6A85E);transform:translateY(-1px);box-shadow:0 6px 20px rgba(198,168,94,0.4)}
+        .sp-btn.owned{background:rgba(0,245,160,0.1);color:var(--green);border:1px solid rgba(0,245,160,0.3);cursor:default}
+        .sp-btn.other{background:rgba(78,202,255,0.08);color:var(--cyan);border:1px solid rgba(78,202,255,0.25);cursor:default}
+        .sp-btn.monument{background:linear-gradient(135deg,rgba(198,168,94,0.2),rgba(198,168,94,0.05));color:var(--gold);border:1px solid rgba(198,168,94,0.45);cursor:default}
+        .sp-altitude{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,180,50,0.7);margin-bottom:10px;text-align:center;letter-spacing:1px}
+
+        /* ─── LEADERBOARD ─── */
+        #leaderboard{position:fixed;right:20px;top:70px;z-index:700;width:200px;opacity:0;transition:opacity 0.6s ease}
+        #leaderboard.show{opacity:1}
+        .lb-inner{background:rgba(4,10,22,0.85);backdrop-filter:blur(16px);border:1px solid rgba(78,202,255,0.12);border-radius:8px;overflow:hidden}
+        .lb-title{padding:10px 14px 8px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(78,202,255,0.6);border-bottom:1px solid rgba(78,202,255,0.08)}
+        .lb-empty{padding:14px;font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2);text-align:center}
+        .lb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,0.04)}
+        .lb-rank{font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,255,255,0.25);width:14px}
+        .lb-rank.gold{color:var(--gold)}
+        .lb-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+        .lb-name{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .lb-score{font-family:'Space Mono',monospace;font-size:9px;color:var(--gold)}
+
+        /* ─── STATS BAR ─── */
+        #stats-bar{position:fixed;bottom:24px;right:20px;z-index:700;opacity:0;transition:opacity 0.6s ease}
+        #stats-bar.show{opacity:1}
+        .stats-inner{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+        .stat-chip{font-family:'Space Mono',monospace;font-size:8px;color:rgba(180,210,230,0.35);padding:3px 8px;background:rgba(4,10,22,0.6);border-radius:3px;border:1px solid rgba(78,202,255,0.08)}
+        .stat-chip span{color:var(--gold)}
+
+        /* ─── WORLD OBJECT TOOLTIP (glassmorphic) ─── */
+        #world-tooltip{position:fixed;pointer-events:none;z-index:1200;opacity:0;transition:opacity 0.18s;transform:translate(-50%,-100%);white-space:nowrap}
+        #world-tooltip.show{opacity:1}
+        .wt-inner{background:rgba(8,16,32,0.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.05) inset}
+        .wt-icon{font-size:16px;margin-bottom:3px;text-align:center}
+        .wt-name{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:#fff;margin-bottom:2px}
+        .wt-sub{font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px}
+        .wt-badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:3px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;font-weight:700}
+        .wt-badge.gold{background:rgba(198,168,94,0.15);color:var(--gold);border:1px solid rgba(198,168,94,0.35)}
+        .wt-badge.cyan{background:rgba(78,202,255,0.12);color:var(--cyan);border:1px solid rgba(78,202,255,0.3)}
+        .wt-badge.green{background:rgba(0,245,160,0.1);color:var(--green);border:1px solid rgba(0,245,160,0.28)}
+
+        /* ─── SLOT TOOLTIP (kept for slot hover) ─── */
+        #slot-tooltip{position:fixed;pointer-events:none;z-index:1000;opacity:0;transition:opacity 0.15s;transform:translate(-50%,-100%);white-space:nowrap}
+        #slot-tooltip.show{opacity:1}
+        .slt-inner{background:rgba(4,10,24,0.95);backdrop-filter:blur(12px);border:1px solid rgba(198,168,94,0.3);border-radius:5px;padding:7px 13px}
+        .slt-name{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1.5px;color:var(--gold)}
+        .slt-sub{font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.4);margin-top:2px}
+
+        /* ─── COIN HUD ─── */
+        #coin-hud{position:fixed;bottom:24px;left:20px;z-index:700;display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,10,22,0.8);backdrop-filter:blur(12px);border:1px solid rgba(198,168,94,0.25);border-radius:6px;opacity:0;transition:opacity 0.6s ease}
+        #coin-hud.show{opacity:1}
+        .coin-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);animation:blink 2s ease infinite}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+        .coin-label{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1.5px;color:rgba(198,168,94,0.5)}
+        .coin-amount{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--gold)}
+
+        /* ─── SIDEBAR ─── */
+        #sidebar{position:fixed;top:0;right:0;width:290px;height:100vh;z-index:900;transform:translateX(100%);transition:transform 0.36s cubic-bezier(0.16,1,0.3,1)}
+        #sidebar.open{transform:translateX(0)}
+        .sidebar-backdrop{position:fixed;inset:0;z-index:899;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.3s}
+        .sidebar-backdrop.show{opacity:1;pointer-events:all}
+        .sidebar-inner{height:100%;overflow-y:auto;background:linear-gradient(180deg,rgba(4,10,24,0.98),rgba(6,14,30,0.98));border-left:1px solid rgba(78,202,255,0.12);display:flex;flex-direction:column}
+        .sidebar-inner::before{content:'';display:block;height:2px;flex-shrink:0;background:linear-gradient(90deg,transparent,var(--gold),var(--cyan),var(--gold),transparent);background-size:200% 100%;animation:scan 3s linear infinite}
+        .sb-header{padding:50px 20px 16px;border-bottom:1px solid rgba(78,202,255,0.08)}
+        .sb-profile{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+        .sb-avatar{width:44px;height:44px;border-radius:9px;border:1.5px solid var(--gold);object-fit:cover}
+        .sb-name{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:0.8px}
+        .sb-handle{font-family:'Space Mono',monospace;font-size:9px;color:rgba(180,210,230,0.4);margin-top:2px}
+        .sb-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:3px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1.5px;font-weight:700}
+        .sb-status.active{background:rgba(0,245,160,0.08);color:var(--green);border:1px solid rgba(0,245,160,0.25)}
+        .sb-status.inactive{background:rgba(180,180,180,0.06);color:#888;border:1px solid rgba(180,180,180,0.15)}
+        .sb-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+        .sb-status.active .sb-dot{animation:blink 1.5s ease infinite}
+        .sb-section{padding:14px 20px 6px}
+        .sb-section-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2.5px;color:rgba(180,210,230,0.28);margin-bottom:6px}
+        .sb-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:6px;cursor:pointer;transition:all 0.15s;color:rgba(200,225,240,0.65);font-size:13px;font-weight:600;border:1px solid transparent}
+        .sb-item:hover{background:rgba(78,202,255,0.06);border-color:rgba(78,202,255,0.1);color:#fff;padding-left:16px}
+        .sb-icon{width:18px;text-align:center;font-size:13px;color:rgba(180,210,230,0.35)}
+        .sb-item:hover .sb-icon{color:var(--cyan)}
+        .sb-badge{font-family:'Orbitron',monospace;font-size:7px;padding:2px 6px;border-radius:2px;letter-spacing:1px;font-weight:700;margin-left:auto}
+        .badge-gold{background:rgba(198,168,94,0.12);color:var(--gold);border:1px solid rgba(198,168,94,0.28)}
+        .sb-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(78,202,255,0.08),transparent);margin:4px 20px}
+        .sb-logout{margin:10px 20px 22px;display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid rgba(255,64,96,0.22);border-radius:6px;cursor:pointer;color:#FF4060;font-size:12px;font-weight:600;letter-spacing:0.5px;transition:all 0.2s}
+        .sb-logout:hover{background:rgba(255,64,96,0.07);border-color:rgba(255,64,96,0.4)}
+
+        @media(max-width:640px){#sidebar{width:100%}.topbar-title{display:none}.user-name{display:none}#leaderboard{display:none}}
+    </style>
+</head>
+<body>
+
+<div id="loading">
+    <div class="ld-ring"></div>
+    <div class="ld-title" id="ld-title">LOADING UNIVERSE</div>
+    <div class="ld-sub" id="ld-sub">Preparing world…</div>
+</div>
+
+<div id="canvas-container"></div>
+<div id="back-btn" onclick="window.location.href='../brand-universe.html'">← UNIVERSE</div>
+
+<header id="topbar">
+    <div class="topbar-left" style="padding-left:110px">
+        <span class="topbar-title" id="world-title-bar">INDUSTRY WORLD</span>
+    </div>
+    <div class="topbar-right">
+        <div style="display:flex;align-items:center;gap:8px">
+            <img src="" alt="" class="user-avatar" id="topUserAvatar" onerror="this.style.display='none'">
+            <span class="user-name" id="topUsername"></span>
+        </div>
+        <div id="menu-btn"><span></span><span></span><span></span></div>
+    </div>
+</header>
+
+<div id="world-hud">
+    <div class="whud-tag">// INDUSTRY WORLD</div>
+    <div class="whud-name" id="whud-name">TECHNOLOGY</div>
+    <div class="whud-bar"></div>
+</div>
+
+<!-- SLOT PROGRESS BAR -->
+<div id="slot-progress">
+    <div class="sp-prog-inner">
+        <div class="sp-prog-row">
+            <span class="sp-prog-label">SLOTS CLAIMED</span>
+            <span class="sp-prog-count"><span id="prog-claimed">0</span> / <span id="prog-total">10,000</span></span>
+        </div>
+        <div class="sp-prog-track"><div class="sp-prog-fill" id="prog-fill"></div></div>
+    </div>
+</div>
+
+<div id="leaderboard">
+    <div class="lb-inner">
+        <div class="lb-title">⬡ TOP BRANDS</div>
+        <div class="lb-empty" id="lb-content">No brands yet</div>
+    </div>
+</div>
+
+<div id="stats-bar">
+    <div class="stats-inner">
+        <div class="stat-chip">SLOTS <span id="stat-occupied">0</span> / <span id="stat-total">10,000</span></div>
+        <div class="stat-chip">PRICE <span id="stat-price">1,000</span> ₿</div>
+    </div>
+</div>
+
+<div id="coin-hud">
+    <div class="coin-dot"></div>
+    <div class="coin-label">COINS</div>
+    <div class="coin-amount" id="coin-amount">0</div>
+</div>
+
+<!-- GLASSMORPHIC WORLD OBJECT TOOLTIP -->
+<div id="world-tooltip">
+    <div class="wt-inner">
+        <div class="wt-icon" id="wt-icon">⛰</div>
+        <div class="wt-name" id="wt-name">MOUNTAIN</div>
+        <div class="wt-sub" id="wt-sub">High altitude zone</div>
+        <div class="wt-badge gold" id="wt-badge" style="display:none">PREMIUM</div>
+    </div>
+</div>
+
+<!-- SLOT TOOLTIP -->
+<div id="slot-tooltip">
+    <div class="slt-inner">
+        <div class="slt-name" id="slt-name">SLOT #000</div>
+        <div class="slt-sub" id="slt-sub">Available · 1,000 ₿</div>
+    </div>
+</div>
+
+<!-- SLOT / MONUMENT PANEL -->
+<div id="slot-panel">
+    <div class="sp-inner">
+        <div class="sp-bar"></div>
+        <div class="sp-body">
+            <div class="sp-row">
+                <div class="sp-tag" id="sp-tag">// SLOT</div>
+                <div class="sp-close" onclick="closeSlotPanel()">✕</div>
+            </div>
+            <div class="sp-title" id="sp-title">Slot #000</div>
+            <div class="sp-altitude" id="sp-altitude"></div>
+            <div class="sp-grid">
+                <div class="sp-stat"><div class="sp-stat-label">TYPE</div><div class="sp-stat-val gold" id="sp-type">NORMAL</div></div>
+                <div class="sp-stat"><div class="sp-stat-label">PRICE</div><div class="sp-stat-val gold" id="sp-price">1,000 ₿</div></div>
+                <div class="sp-stat"><div class="sp-stat-label">STATUS</div><div class="sp-stat-val green" id="sp-status">AVAILABLE</div></div>
+                <div class="sp-stat"><div class="sp-stat-label">OWNER</div><div class="sp-stat-val cyan" id="sp-owner">—</div></div>
+            </div>
+            <button class="sp-btn buy" id="sp-btn" onclick="handleSlotAction()">◎ CLAIM SLOT</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<aside id="sidebar">
+    <!-- Content injected dynamically by buildSidebar() after role is detected -->
+    <div class="sidebar-inner" id="sidebarInner">
+        <button id="sidebarCloseBtn" style="position:absolute;top:14px;left:14px;width:30px;height:30px;background:rgba(255,64,96,0.07);border:1px solid rgba(255,64,96,0.22);border-radius:5px;color:#FF4060;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">✕</button>
+    </div>
+</aside>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="../scripts/firebase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ═══════════════════════════════ SIDEBAR ═══════════════════════════════ */
+const menuBtn=document.getElementById('menu-btn'),sidebar=document.getElementById('sidebar'),backdrop=document.getElementById('sidebarBackdrop');
+function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('show');menuBtn.classList.add('open')}
+function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show');menuBtn.classList.remove('open')}
+menuBtn.addEventListener('click',()=>sidebar.classList.contains('open')?closeSidebar():openSidebar());
+backdrop.addEventListener('click',closeSidebar);
+// NOTE: sidebarCloseBtn, sbLogout etc. are wired up inside buildSidebar() after role detection
+
+function _esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,'&#x27;');}
+
+function buildSidebar(profile){
+    const inner=document.getElementById('sidebarInner');
+    const role=profile.role||'brand';
+    const statusCls=profile.status==='active'?'active':'inactive';
+    const roleColors={admin:'#FF4060',brand:'#C6A85E',user:'#4ECAFF'};
+    const roleColor=roleColors[role]||'#C6A85E';
+
+    const navSections={
+        admin:`
+            <div class="sb-section">
+                <div class="sb-section-label">// Navigate</div>
+                <div class="sb-item" onclick="window.location.href='../brand-universe.html'"><span class="sb-icon">◎</span><span>Universe</span></div>
+                <div class="sb-item" onclick="window.location.href='../admin-home.html'"><span class="sb-icon">⌂</span><span>Admin Dashboard</span></div>
+                <div class="sb-item" onclick="window.location.href='../user-dashboard.html'"><span class="sb-icon">⊞</span><span>Brand Explorer</span></div>
+            </div>
+            <div class="sb-divider"></div>
+            <div class="sb-section">
+                <div class="sb-section-label">// Administration</div>
+                <div class="sb-item" onclick="window.location.href='../admin-users.html'"><span class="sb-icon">👥</span><span>Manage Users</span></div>
+                <div class="sb-item" onclick="window.location.href='../admin-brands.html'"><span class="sb-icon">🏷</span><span>Manage Brands</span></div>
+                <div class="sb-item" onclick="window.location.href='../admin-analytics.html'"><span class="sb-icon">📊</span><span>All Analytics</span></div>
+            </div>`,
+        brand:`
+            <div class="sb-section">
+                <div class="sb-section-label">// Navigate</div>
+                <div class="sb-item" onclick="window.location.href='../brand-universe.html'"><span class="sb-icon">◎</span><span>Universe</span></div>
+                <div class="sb-item" onclick="window.location.href='../brand-dashboard.html'"><span class="sb-icon">⌂</span><span>Dashboard</span></div>
+                <div class="sb-item" onclick="window.location.href='../user-dashboard.html'"><span class="sb-icon">⊞</span><span>Brand Explorer</span></div>
+            </div>
+            <div class="sb-divider"></div>
+            <div class="sb-section">
+                <div class="sb-section-label">// Account</div>
+                <div class="sb-item" id="sbEditProfile"><span class="sb-icon">✎</span><span>Edit Profile</span></div>
+                <div class="sb-item" id="sbVerify"><span class="sb-icon">◈</span><span>Verification</span><span class="sb-badge badge-gold">₦5K</span></div>
+            </div>`,
+        user:`
+            <div class="sb-section">
+                <div class="sb-section-label">// Navigate</div>
+                <div class="sb-item" onclick="window.location.href='../brand-universe.html'"><span class="sb-icon">◎</span><span>Universe</span></div>
+                <div class="sb-item" onclick="window.location.href='../user-dashboard.html'"><span class="sb-icon">⌂</span><span>Dashboard</span></div>
+            </div>
+            <div class="sb-divider"></div>
+            <div class="sb-section">
+                <div class="sb-section-label">// Account</div>
+                <div class="sb-item" id="sbEditProfile"><span class="sb-icon">✎</span><span>Edit Profile</span></div>
+                <div class="sb-item"><span class="sb-icon">⬆</span><span>Upgrade to Brand</span></div>
+            </div>`
+    };
+
+    inner.innerHTML=`
+        <button id="sidebarCloseBtn" style="position:absolute;top:14px;left:14px;width:30px;height:30px;background:rgba(255,64,96,0.07);border:1px solid rgba(255,64,96,0.22);border-radius:5px;color:#FF4060;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">✕</button>
+        <div class="sb-header">
+            <div class="sb-profile">
+                <img src="${_esc(profile.photoURL)}" alt="" class="sb-avatar" id="sbAvatar" onerror="this.style.display='none'">
+                <div>
+                    <div class="sb-name" id="sbName">${_esc(profile.name||'USER')}</div>
+                    <div class="sb-handle" id="sbHandle">${_esc(profile.handle||'')}</div>
+                    <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:3px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1.5px;font-weight:700;background:rgba(0,0,0,0.3);color:${roleColor};border:1px solid ${roleColor}40">${_esc(role.toUpperCase())}</div>
+                </div>
+            </div>
+            <span class="sb-status ${_esc(statusCls)}" id="sbStatus"><span class="sb-dot"></span> ${_esc(statusCls.toUpperCase())}</span>
+        </div>
+        ${navSections[role]||navSections.user}
+        <div class="sb-divider"></div>
+        <div class="sb-logout" id="sbLogout"><span>⏻</span>LOGOUT</div>`;
+
+    // Wire up after innerHTML is set
+    document.getElementById('sidebarCloseBtn').addEventListener('click',closeSidebar);
+    document.getElementById('sbLogout').addEventListener('click',async()=>{
+        if(typeof firebase!=='undefined')await firebase.auth().signOut();
+        window.location.href='../index.html';
+    });
+    const ep=document.getElementById('sbEditProfile');
+    if(ep)ep.addEventListener('click',()=>{closeSidebar();alert('Edit profile — coming soon');});
+    const sv=document.getElementById('sbVerify');
+    if(sv)sv.addEventListener('click',()=>{closeSidebar();alert('Verification — coming soon');});
+}
+
+/* ═══════════════════════════════ INDUSTRY THEMES ═══════════════════════════════ */
+const THEMES={
+    'Technology':     {sky:0x04101e,fog:0x081828,accent:0x4ECAFF,ground:0x0d1e30,tex1:'terrain_dark.jpg',   tex2:'terrain_ice.jpg',    mtnColor:0x2a3a4a,snowH:260,leafCol:0x1a4a6a,trunkCol:0x0a2030,lavaBands:false,iceCaps:true,  crystalColor:0x4ECAFF},
+    'Finance':        {sky:0x041208,fog:0x081a0c,accent:0x00F5A0,ground:0x0a1e10,tex1:'terrain_forest.jpg', tex2:'terrain_rocky.jpg',  mtnColor:0x1a3020,snowH:220,leafCol:0x0a4020,trunkCol:0x2a1a08,lavaBands:false,iceCaps:false, crystalColor:0x00F5A0},
+    'Healthcare':     {sky:0x120820,fog:0x1e0e30,accent:0xcc88ff,ground:0x200a30,tex1:'terrain_cosmic.jpg', tex2:'terrain_dark.jpg',   mtnColor:0x2a1040,snowH:300,leafCol:0x3a0a5a,trunkCol:0x200828,lavaBands:false,iceCaps:true,  crystalColor:0xcc88ff},
+    'Agriculture':    {sky:0x061408,fog:0x0c2010,accent:0x80ff44,ground:0x102810,tex1:'terrain_forest.jpg', tex2:'terrain_sand.jpg',   mtnColor:0x1a3010,snowH:200,leafCol:0x1a4a08,trunkCol:0x3a2010,lavaBands:false,iceCaps:false, crystalColor:0x80ff44},
+    'Education':      {sky:0x100e04,fog:0x1c1808,accent:0xffcc44,ground:0x1e1808,tex1:'terrain_sand.jpg',   tex2:'terrain_rocky.jpg',  mtnColor:0x302010,snowH:240,leafCol:0x304010,trunkCol:0x302010,lavaBands:false,iceCaps:false, crystalColor:0xffcc44},
+    'Fashion':        {sky:0x140610,fog:0x200a1c,accent:0xff88cc,ground:0x240818,tex1:'terrain_cosmic.jpg', tex2:'terrain_dark.jpg',   mtnColor:0x3a0828,snowH:280,leafCol:0x3a0838,trunkCol:0x1a0818,lavaBands:false,iceCaps:true,  crystalColor:0xff88cc},
+    'Energy':         {sky:0x180400,fog:0x280800,accent:0xff6600,ground:0x200800,tex1:'terrain_lava.jpg',   tex2:'terrain_rocky.jpg',  mtnColor:0x3a1000,snowH:999,leafCol:0x2a0800,trunkCol:0x1a0600,lavaBands:true, iceCaps:false, crystalColor:0xff6600},
+    'Media':          {sky:0x060e16,fog:0x0c1620,accent:0x4488ff,ground:0x101830,tex1:'terrain_dark.jpg',   tex2:'terrain_cosmic.jpg', mtnColor:0x1a2840,snowH:250,leafCol:0x0a2040,trunkCol:0x0a1830,lavaBands:false,iceCaps:false, crystalColor:0x4488ff},
+    'Gaming':         {sky:0x0a0620,fog:0x100a30,accent:0xaa44ff,ground:0x160830,tex1:'terrain_cosmic.jpg', tex2:'terrain_dark.jpg',   mtnColor:0x200840,snowH:300,leafCol:0x280850,trunkCol:0x100828,lavaBands:false,iceCaps:true,  crystalColor:0xaa44ff},
+    'Real Estate':    {sky:0x080c14,fog:0x101420,accent:0xC6A85E,ground:0x141e2c,tex1:'terrain_rocky.jpg',  tex2:'terrain_sand.jpg',   mtnColor:0x242e40,snowH:230,leafCol:0x243020,trunkCol:0x2a1e10,lavaBands:false,iceCaps:false, crystalColor:0xC6A85E},
+    'Transportation': {sky:0x060e0e,fog:0x0c1616,accent:0x44ffee,ground:0x101e1e,tex1:'terrain_dark.jpg',   tex2:'terrain_ice.jpg',    mtnColor:0x182828,snowH:260,leafCol:0x0a3028,trunkCol:0x0a1e18,lavaBands:false,iceCaps:true,  crystalColor:0x44ffee},
+    'Science':        {sky:0x000810,fog:0x000e1c,accent:0x00ccff,ground:0x001020,tex1:'terrain_ice.jpg',    tex2:'terrain_dark.jpg',   mtnColor:0x002030,snowH:200,leafCol:0x002838,trunkCol:0x001828,lavaBands:false,iceCaps:true,  crystalColor:0x00ccff},
+    'Government':     {sky:0x080404,fog:0x140808,accent:0xff4444,ground:0x180808,tex1:'terrain_rocky.jpg',  tex2:'terrain_dark.jpg',   mtnColor:0x281010,snowH:240,leafCol:0x1a0808,trunkCol:0x180808,lavaBands:false,iceCaps:false, crystalColor:0xff4444},
+    'Entertainment':  {sky:0x100408,fog:0x1c060e,accent:0xff6688,ground:0x1c0810,tex1:'terrain_lava.jpg',   tex2:'terrain_cosmic.jpg', mtnColor:0x2c0818,snowH:999,leafCol:0x200818,trunkCol:0x180608,lavaBands:true, iceCaps:false, crystalColor:0xff6688},
+    'Artificial Intelligence':{sky:0x020810,fog:0x040e1c,accent:0x00ffcc,ground:0x080e20,tex1:'terrain_ice.jpg',tex2:'terrain_dark.jpg',mtnColor:0x101c30,snowH:220,leafCol:0x082838,trunkCol:0x061820,lavaBands:false,iceCaps:true, crystalColor:0x00ffcc},
+    'Manufacturing':  {sky:0x0a0a06,fog:0x141410,accent:0xddcc88,ground:0x181812,tex1:'terrain_rocky.jpg',  tex2:'terrain_sand.jpg',   mtnColor:0x282818,snowH:200,leafCol:0x242808,trunkCol:0x281e08,lavaBands:false,iceCaps:false, crystalColor:0xddcc88},
+    'Food & Beverage':{sky:0x0e0604,fog:0x1c0e08,accent:0xff8844,ground:0x1c0e08,tex1:'terrain_sand.jpg',   tex2:'terrain_forest.jpg', mtnColor:0x281808,snowH:220,leafCol:0x1e2808,trunkCol:0x281808,lavaBands:false,iceCaps:false, crystalColor:0xff8844},
+    'Culture & Arts': {sky:0x100608,fog:0x1c0a10,accent:0xff66aa,ground:0x200810,tex1:'terrain_forest.jpg', tex2:'terrain_cosmic.jpg', mtnColor:0x2c0c1c,snowH:260,leafCol:0x1c0828,trunkCol:0x180818,lavaBands:false,iceCaps:false, crystalColor:0xff66aa},
+    'Space':          {sky:0x010206,fog:0x020408,accent:0x8866ff,ground:0x040610,tex1:'terrain_cosmic.jpg', tex2:'terrain_dark.jpg',   mtnColor:0x0c1030,snowH:999,leafCol:0x080828,trunkCol:0x060618,lavaBands:false,iceCaps:false, crystalColor:0x8866ff},
+    'Cybersecurity':  {sky:0x020802,fog:0x041004,accent:0x00ff88,ground:0x040c04,tex1:'terrain_dark.jpg',   tex2:'terrain_forest.jpg', mtnColor:0x081408,snowH:260,leafCol:0x042008,trunkCol:0x040c04,lavaBands:false,iceCaps:true,  crystalColor:0x00ff88}
+};
+
+/* ═══════════════════════════════ CONSTANTS ═══════════════════════════════ */
+// GRID: 100×100 = 10,000 slots (max 100,000 supported, capped here)
+const GRID_SIZE   = 100;
+const MAX_SLOTS   = 100000; // hard cap displayed
+const SLOT_SIZE   = 95;     // geometry width/depth — square tiles
+const SLOT_SPACING= 108;    // center-to-center distance (≥ SLOT_SIZE for visible gaps)
+const BASE_PRICE  = 1000;
+const MOUNTAIN_MAX_HEIGHT = 800;
+
+// Monument (Steele)
+const STEELE_HEIGHT = 1400;
+const STEELE_WIDTH  = 320;   // wider for majestic look & readable names
+const STEELE_DEPTH  = 80;
+
+/* ═══════════════════════════════ STATE ═══════════════════════════════ */
+let scene,camera,renderer,controls,raycaster,mouse;
+let slotMeshes=[],slotData=[],hoveredSlot=null,selectedSlot=null;
+let currentBrandId=null,userCoins=0,worldKey='',selectedIndustry='Technology';
+let theme=THEMES['Technology'];
+let time=0,frame=0;
+let sunLight,moonLight,sunMesh,skyLight;
+let isAnimatingCamera=false;
+let steeleMesh=null;
+let steeleCanvas=null,steeleCtx=null,steeleTexture=null;
+let crystalMeshes=[];
+let hoveredWorldObj=null; // 'steele' | 'mountain' | 'crystal' | 'forest' | null
+
+/* ═══════════════════════════════ GMT TIME ═══════════════════════════════ */
+function getGMTHour(){return new Date().getUTCHours()+new Date().getUTCMinutes()/60}
+function isDaytime(){const h=getGMTHour();return h>=6&&h<20}
+function getDayProgress(){const h=getGMTHour();return(h>=6&&h<20)?(h-6)/14:-1}
+
+/* ═══════════════════════════════ SEEDED RANDOM ═══════════════════════════════ */
+function sr(s){const x=Math.sin(s+1)*10000;return x-Math.floor(x)}
+function ir(i,n){return sr(i*137.508+n*1.618+selectedIndustry.length*13.7)}
+
+/* ═══════════════════════════════ MOUNTAIN SYSTEM ═══════════════════════════════ */
+const MT_W=5,MT_H=4;
+let MOUNTAIN_CENTRES=[];
+
+function initMountainCentres(){
+    MOUNTAIN_CENTRES=[];
+    const margin=12;
+    for(let s=0;s<10;s++){
+        const row=Math.floor(margin+ir(s,1)*(GRID_SIZE-margin*2));
+        const col=Math.floor(margin+ir(s,2)*(GRID_SIZE-margin*2));
+        MOUNTAIN_CENTRES.push({row,col});
+    }
+}
+
+function getMountainStrength(row,col){
+    let best=0;
+    for(const c of MOUNTAIN_CENTRES){
+        const dr=row-c.row,dc=col-c.col;
+        if(Math.abs(dr)<MT_H+2&&Math.abs(dc)<MT_W+2){
+            const d2=(dr/MT_H)**2+(dc/MT_W)**2;
+            const strength=Math.max(0,1-d2);
+            if(strength>best)best=strength;
+        }
+    }
+    return best;
+}
+
+function getSlotType(i){
+    const row=Math.floor(i/GRID_SIZE),col=i%GRID_SIZE;
+    const d=Math.max(Math.abs(row-49.5),Math.abs(col-49.5));
+    if(d<=3)return 'CENTRAL';
+    if(getMountainStrength(row,col)>0.05)return 'MOUNTAIN';
+    return 'NORMAL';
+}
+
+function getSlotHeight(i){
+    const row=Math.floor(i/GRID_SIZE),col=i%GRID_SIZE;
+    const mStr=getMountainStrength(row,col);
+    const type=getSlotType(i);
+    const hv=sr(i*7+3);
+    if(type==='MOUNTAIN'){
+        const base=mStr*MOUNTAIN_MAX_HEIGHT;
+        return base*(0.85+hv*0.15);
+    }
+    if(type==='CENTRAL') return 0.8+hv*0.4;
+    return 0.1+hv*0.25;
+}
+
+function getSlotPrice(i){
+    const h=getSlotHeight(i),type=getSlotType(i);
+    const occ=slotData.filter(s=>s.ownerId).length/Math.max(slotData.length,1);
+    let scarcityMult=occ>0.95?6:occ>0.9?4:occ>0.75?2.5:occ>0.5?1.5:1;
+    let altitudeMult=1;
+    if(type==='MOUNTAIN')altitudeMult=1+(h/MOUNTAIN_MAX_HEIGHT)*7;
+    else if(type==='CENTRAL')altitudeMult=3;
+    return Math.floor(BASE_PRICE*altitudeMult*scarcityMult);
+}
+
+function getSlotColor(i,hover,sel){
+    const d=slotData[i];
+    if(!d)return new THREE.Color(0x334455);
+    if(sel)return new THREE.Color(0xffffff);
+    if(hover)return new THREE.Color(0xffdd88);
+    if(d.ownerId===currentBrandId)return new THREE.Color(theme.accent);
+    if(d.ownerId)return new THREE.Color(0x4488ff);
+    const t=getSlotType(i);
+    const h=getSlotHeight(i);
+    if(t==='MOUNTAIN'){
+        if(h>MOUNTAIN_MAX_HEIGHT*0.85)return new THREE.Color(0xddeeff);
+        if(h>MOUNTAIN_MAX_HEIGHT*0.55)return new THREE.Color(0x888888);
+        return new THREE.Color(theme.mtnColor);
+    }
+    if(t==='CENTRAL')return new THREE.Color(theme.accent).multiplyScalar(0.4);
+    return new THREE.Color(theme.ground);
+}
+
+/* ═══════════════════════════════ SCENE INIT ═══════════════════════════════ */
+function initScene(){
+    const c=document.getElementById('canvas-container');
+    scene=new THREE.Scene();
+    scene.background=new THREE.Color(theme.sky);
+    scene.fog=new THREE.FogExp2(theme.fog,0.00015);
+    camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.5,30000);
+    camera.position.set(0,14000,3000);camera.lookAt(0,0,0);
+    const mob=/Android|iPhone|iPad/i.test(navigator.userAgent);
+    renderer=new THREE.WebGLRenderer({antialias:!mob,alpha:false,powerPreference:'high-performance'});
+    renderer.setSize(innerWidth,innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,mob?1:1.5));
+    renderer.shadowMap.enabled=!mob;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+    c.appendChild(renderer.domElement);
+    raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+    controls=new THREE.OrbitControls(camera,renderer.domElement);
+    controls.enableDamping=true;controls.dampingFactor=0.05;controls.enablePan=true;
+    controls.panSpeed=1.4;controls.screenSpacePanning=true;
+    controls.minDistance=200;controls.maxDistance=18000;
+    controls.maxPolarAngle=Math.PI*0.88;
+    controls.target.set(0,0,0);controls.update();
+    renderer.domElement.addEventListener('wheel',onWheelZoom,{passive:false});
+    scene.add(new THREE.HemisphereLight(0x334455,0x221100,0.35));
+}
+
+/* ═══════════════════════════════ MOUSE-AIMED ZOOM ═══════════════════════════════ */
+function onWheelZoom(e){
+    e.preventDefault();
+    if(isAnimatingCamera)return;
+    mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+    const worldPoint=new THREE.Vector3();
+    raycaster.ray.intersectPlane(groundPlane,worldPoint);
+    if(!worldPoint)return;
+    const zoomFactor=e.deltaY>0?1.12:0.88;
+    const camToTarget=camera.position.clone().sub(controls.target);
+    const dist=camToTarget.length();
+    const newDist=Math.max(controls.minDistance,Math.min(controls.maxDistance,dist*zoomFactor));
+    const lerpAmt=e.deltaY>0?0:0.12;
+    const newTarget=controls.target.clone().lerp(worldPoint,lerpAmt);
+    const newCamPos=newTarget.clone().add(camToTarget.normalize().multiplyScalar(newDist));
+    camera.position.copy(newCamPos);controls.target.copy(newTarget);controls.update();
+}
+
+/* ═══════════════════════════════ CAMERA ANIMATION TO SLOT ═══════════════════════════════ */
+function animateCameraToSlot(worldX,worldY,worldZ){
+    if(isAnimatingCamera)return;
+    isAnimatingCamera=true;
+    const target=new THREE.Vector3(worldX,worldY,worldZ);
+    const camDist=600;
+    const camTarget=new THREE.Vector3(worldX,worldY+camDist*0.7,worldZ+camDist*0.5);
+    const startPos=camera.position.clone(),startLook=controls.target.clone();
+    const t0=Date.now(),duration=1500;
+    function loop(){
+        const elapsed=Date.now()-t0,p=Math.min(elapsed/duration,1);
+        const e=p<0.5?2*p*p:1-(-2*p+2)**2/2;
+        camera.position.lerpVectors(startPos,camTarget,e);
+        controls.target.lerpVectors(startLook,target,e);
+        controls.update();
+        if(p<1)requestAnimationFrame(loop);else isAnimatingCamera=false;
+    }
+    loop();
+}
+
+/* ═══════════════════════════════ CAMERA ANIMATION TO STEELE TOP ═══════════════════════════════ */
+function animateCameraToSteeleTop(){
+    if(isAnimatingCamera)return;
+    isAnimatingCamera=true;
+    // Aim at the steele crown, orbit from a dramatic angle so leaderboard is readable
+    const finalTarget=new THREE.Vector3(0,STEELE_HEIGHT*0.72,0);
+    const finalCamPos=new THREE.Vector3(STEELE_WIDTH*2.2,STEELE_HEIGHT*0.95,STEELE_DEPTH*5);
+    const startPos=camera.position.clone(),startTarget=controls.target.clone();
+    const t0=Date.now(),duration=2000;
+    function loop(){
+        const elapsed=Date.now()-t0,p=Math.min(elapsed/duration,1);
+        const e=p<0.5?2*p*p:1-(-2*p+2)**2/2;
+        camera.position.lerpVectors(startPos,finalCamPos,e);
+        controls.target.lerpVectors(startTarget,finalTarget,e);
+        controls.update();
+        if(p<1)requestAnimationFrame(loop);else isAnimatingCamera=false;
+    }
+    loop();
+}
+
+/* ═══════════════════════════════ INTRO CAMERA TO STEELE ═══════════════════════════════ */
+function animateCameraToSteele(){
+    isAnimatingCamera=true;
+    const startPos=camera.position.clone(),startTarget=controls.target.clone();
+    const finalCamPos=new THREE.Vector3(900,STEELE_HEIGHT*0.85,1200);
+    const finalTarget=new THREE.Vector3(0,STEELE_HEIGHT*0.5,0);
+    const t0=Date.now(),duration=3500;
+    function loop(){
+        const elapsed=Date.now()-t0,p=Math.min(elapsed/duration,1);
+        const e=p<0.5?2*p*p:1-(-2*p+2)**2/2;
+        camera.position.lerpVectors(startPos,finalCamPos,e);
+        controls.target.lerpVectors(startTarget,finalTarget,e);
+        controls.update();
+        if(p<1)requestAnimationFrame(loop);else isAnimatingCamera=false;
+    }
+    loop();
+}
+
+/* ═══════════════════════════════ TEXTURE LOADER ═══════════════════════════════ */
+const texLoader=new THREE.TextureLoader();
+function loadTex(name,repeatX,repeatY,cb){
+    texLoader.load('assets/textures/'+name,(t)=>{
+        t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeatX||20,repeatY||20);
+        t.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+        if(cb)cb(t);
+    },undefined,()=>{if(cb)cb(null)});
+}
+
+/* ═══════════════════════════════ TERRAIN ═══════════════════════════════ */
+function buildTerrain(){
+    const gridSpan=GRID_SIZE*SLOT_SPACING;
+    const gGeo=new THREE.PlaneGeometry(gridSpan*2.2,gridSpan*2.2,100,100);
+    const pos=gGeo.attributes.position.array;
+    for(let i=0;i<pos.length;i+=3){
+        const x=pos[i],z=pos[i+2];
+        pos[i+1]=sr(x*0.0008+z*0.0012+42)*40+sr(x*0.0025+z*0.0018+77)*20+sr(x*0.006+z*0.004+13)*8-sr(x*0.0035+z*0.0055+99)*15;
+    }
+    gGeo.attributes.position.needsUpdate=true;gGeo.computeVertexNormals();
+    const groundMat=new THREE.MeshStandardMaterial({color:new THREE.Color(theme.ground),roughness:0.95,metalness:0.0});
+    loadTex(theme.tex1,50,50,(t1)=>{
+        if(!t1)return;groundMat.map=t1;groundMat.color.setHex(0xbbbbbb);
+        loadTex(theme.tex2,30,30,(t2)=>{if(t2){groundMat.roughnessMap=t2;groundMat.needsUpdate=true;}});
+        groundMat.needsUpdate=true;
+    });
+    const ground=new THREE.Mesh(gGeo,groundMat);
+    ground.rotation.x=-Math.PI/2;ground.position.y=-2;ground.receiveShadow=true;
+    ground.userData.isGround=true;
+    scene.add(ground);
+
+    if(theme.lavaBands){
+        for(let b=0;b<6;b++){
+            const bGeo=new THREE.PlaneGeometry(gridSpan*0.08+ir(b,1)*gridSpan*0.06,gridSpan*3,3,20);
+            const bMat=new THREE.MeshBasicMaterial({color:0xFF4400,transparent:true,opacity:0.35+ir(b,2)*0.3,depthWrite:false});
+            const bMesh=new THREE.Mesh(bGeo,bMat);
+            bMesh.rotation.x=-Math.PI/2;bMesh.position.set((ir(b,3)-0.5)*gridSpan*2.5,-1.9,0);
+            bMesh.userData.lavaPhase=ir(b,4)*Math.PI*2;bMesh.userData.isLava=true;
+            scene.add(bMesh);
+        }
+    }
+
+    buildBorderMountains(gridSpan);
+    buildForestWall(gridSpan);
+    buildSkyLighting();
+    buildStars();
+    buildCrystals(gridSpan);  // ← new crystals
+}
+
+/* ═══════════════════════════════ BORDER MOUNTAINS ═══════════════════════════════ */
+function buildBorderMountains(gridSpan){
+    const R=gridSpan*0.85,COUNT=28;
+    const mtMat=new THREE.MeshStandardMaterial({color:new THREE.Color(theme.mtnColor),roughness:0.97,metalness:0.0});
+    loadTex(theme.tex1,3,3,(t)=>{if(t){mtMat.map=t;mtMat.color.setHex(0x999999);mtMat.needsUpdate=true;}});
+
+    for(let i=0;i<COUNT;i++){
+        const angle=(i/COUNT)*Math.PI*2+ir(i,1)*0.5;
+        const dist=R*(0.85+ir(i,2)*0.2);
+        const x=Math.cos(angle)*dist,z=Math.sin(angle)*dist;
+        const heightScale=0.6+ir(0,99)*0.8;
+        const h=1800*heightScale+ir(i,3)*3200*heightScale;
+        const w=800+ir(i,4)*1200;
+
+        const peakGeo=new THREE.CylinderGeometry(w*0.03,w*0.52,h,9,6);
+        const pp=peakGeo.attributes.position.array;
+        for(let v=0;v<pp.length;v+=3){
+            const t_=0.5+pp[v+1]/h*0.5,mag=w*(0.15-t_*0.12);
+            pp[v]+=sr(v*3+i*7+1)*mag;pp[v+2]+=sr(v*5+i*11+3)*mag;
+            if(sr(v+i*17)>0.7){pp[v]*=1+sr(v*13)*0.12;pp[v+2]*=1+sr(v*17)*0.12;}
+        }
+        peakGeo.attributes.position.needsUpdate=true;peakGeo.computeVertexNormals();
+        const peak=new THREE.Mesh(peakGeo,mtMat);
+        peak.position.set(x,h/2-2,z);peak.rotation.y=ir(i,5)*Math.PI*2;
+        peak.castShadow=true;peak.receiveShadow=true;
+        peak.userData.isMountain=true;peak.userData.mountainIndex=i;
+        peak.userData.mountainHeight=Math.round(h);
+        scene.add(peak);
+
+        if(h>theme.snowH*10){
+            const snowH=h*0.14;
+            const snow=new THREE.Mesh(new THREE.ConeGeometry(w*0.12,snowH,8),new THREE.MeshStandardMaterial({color:0xeeeeff,roughness:0.25}));
+            snow.position.set(x,h-snowH*0.4-2,z);snow.userData.isMountain=true;snow.userData.mountainIndex=i;snow.userData.mountainHeight=Math.round(h);
+            scene.add(snow);
+        }
+        if(theme.lavaBands&&h>2000){
+            const glowMat=new THREE.MeshBasicMaterial({color:0xff4400,transparent:true,opacity:0.25,side:THREE.BackSide});
+            scene.add(new THREE.Mesh(new THREE.SphereGeometry(w*0.6,8,8),glowMat)).position.set(x,-1,z);
+        }
+        for(let f=0;f<2;f++){
+            const fa=angle+(ir(i*10+f,1)-0.5)*0.7,fd=dist*(0.82+ir(i*10+f,2)*0.22);
+            const fx=Math.cos(fa)*fd,fz=Math.sin(fa)*fd,fh=h*(0.28+ir(i*10+f,3)*0.32),fw=w*(0.38+ir(i*10+f,4)*0.35);
+            const fGeo=new THREE.CylinderGeometry(fw*0.04,fw*0.54,fh,7,4);
+            const fp=fGeo.attributes.position.array;
+            for(let v=0;v<fp.length;v+=3){fp[v]+=sr(v+f*100+i)*fw*0.18;fp[v+2]+=sr(v+f*200+i)*fw*0.18;}
+            fGeo.attributes.position.needsUpdate=true;fGeo.computeVertexNormals();
+            const fMesh=new THREE.Mesh(fGeo,mtMat);fMesh.position.set(fx,fh/2-2,fz);
+            fMesh.userData.isMountain=true;fMesh.userData.mountainIndex=i;fMesh.userData.mountainHeight=Math.round(fh);
+            scene.add(fMesh);
+        }
+    }
+}
+
+/* ═══════════════════════════════ FOREST WALL ═══════════════════════════════ */
+function buildForestWall(gridSpan){
+    const R=gridSpan*0.75,TREES=120;
+    const leafC=new THREE.Color(theme.leafCol);
+    const trunkC=new THREE.Color(theme.trunkCol);
+    const trunkMat=new THREE.MeshStandardMaterial({color:trunkC,roughness:1.0});
+
+    for(let i=0;i<TREES;i++){
+        const angle=(i/TREES)*Math.PI*2+ir(i,10)*0.3;
+        const dist=R*(0.78+ir(i,11)*0.28);
+        const x=Math.cos(angle)*dist,z=Math.sin(angle)*dist;
+        const h=220+ir(i,12)*350,w=60+ir(i,13)*100;
+        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(w*0.05,w*0.09,h*0.38,5),trunkMat);
+        trunk.position.set(x,h*0.19-2,z);trunk.userData.isForest=true;scene.add(trunk);
+        for(let c=0;c<3;c++){
+            const ch=h*(0.48-c*0.09),cw=w*(1.15-c*0.28);
+            const leafVariance=new THREE.Color(leafC).multiplyScalar(0.85+ir(i*3+c,14)*0.3);
+            const cone=new THREE.Mesh(new THREE.ConeGeometry(cw,ch,7),new THREE.MeshStandardMaterial({color:leafVariance,roughness:0.9,transparent:true,opacity:0.88+ir(i,15)*0.12}));
+            cone.position.set(x,h*0.32+c*h*0.18-2,z);cone.userData.isForest=true;scene.add(cone);
+        }
+        if(ir(i,16)>0.75){
+            const rk=new THREE.Mesh(new THREE.IcosahedronGeometry(w*0.4,0),new THREE.MeshStandardMaterial({color:theme.mtnColor,roughness:0.98}));
+            rk.position.set(x+(ir(i,17)-0.5)*w*0.8,-1.5,z+(ir(i,18)-0.5)*w*0.8);
+            rk.rotation.set(ir(i,19)*Math.PI,ir(i,20)*Math.PI,ir(i,21)*Math.PI);
+            rk.userData.isForest=true;scene.add(rk);
+        }
+    }
+}
+
+/* ═══════════════════════════════ CRYSTALS (glow at night) ═══════════════════════════════ */
+function buildCrystals(gridSpan){
+    crystalMeshes=[];
+    const night=!isDaytime();
+    const crystalCol=new THREE.Color(theme.crystalColor||theme.accent);
+
+    // Place crystal clusters at ~40 positions within/around the grid boundary
+    const CLUSTERS=40;
+    const R=gridSpan*0.62; // within mountain ring
+
+    for(let ci=0;ci<CLUSTERS;ci++){
+        const angle=ir(ci,50)*Math.PI*2;
+        const dist=R*(0.18+ir(ci,51)*0.82);  // spread across inner area
+        const cx=Math.cos(angle)*dist;
+        const cz=Math.sin(angle)*dist;
+        const clusterSize=2+Math.floor(ir(ci,52)*5); // 2–6 crystals per cluster
+
+        for(let k=0;k<clusterSize;k++){
+            const kx=cx+(ir(ci*10+k,53)-0.5)*180;
+            const kz=cz+(ir(ci*10+k,54)-0.5)*180;
+
+            const crystalH=60+ir(ci*10+k,55)*160;
+            const crystalR=6+ir(ci*10+k,56)*14;
+
+            // Hexagonal prism (approximated with CylinderGeometry 6 sides)
+            const crystGeo=new THREE.CylinderGeometry(crystalR*0.15,crystalR,crystalH,6,1);
+            const pp=crystGeo.attributes.position.array;
+            // Taper + slight wobble
+            for(let v=0;v<pp.length;v+=3){
+                const t_=0.5+pp[v+1]/crystalH*0.5;
+                pp[v]  *=1-t_*0.3+ir(ci*100+k*10+v,57)*0.15;
+                pp[v+2]*=1-t_*0.3+ir(ci*100+k*10+v,58)*0.15;
+            }
+            crystGeo.attributes.position.needsUpdate=true;crystGeo.computeVertexNormals();
+
+            const crystColor=new THREE.Color(crystalCol).multiplyScalar(0.7+ir(ci*10+k,59)*0.6);
+            const crystMat=new THREE.MeshStandardMaterial({
+                color:crystColor,
+                emissive:crystColor,
+                emissiveIntensity:night?1.8:0.15,
+                roughness:0.05,
+                metalness:0.1,
+                transparent:true,
+                opacity:0.82
+            });
+            const cryst=new THREE.Mesh(crystGeo,crystMat);
+            cryst.position.set(kx,crystalH/2-2,kz);
+            cryst.rotation.y=ir(ci*10+k,60)*Math.PI*2;
+            cryst.rotation.x=(ir(ci*10+k,61)-0.5)*0.25;
+            cryst.userData.isCrystal=true;
+            cryst.userData.crystalPhase=ir(ci,62)*Math.PI*2;
+            cryst.userData.crystalHeight=Math.round(crystalH);
+            cryst.userData.baseColor=crystColor;
+            scene.add(cryst);
+            crystalMeshes.push(cryst);
+
+            // Point light for each cluster (not every crystal to keep perf)
+            if(k===0){
+                const cLight=new THREE.PointLight(new THREE.Color(crystalCol),night?1.8:0.0,500);
+                cLight.position.set(kx,crystalH+20,kz);
+                cLight.userData.isCrystalLight=true;
+                cLight.userData.crystalPhase=ir(ci,62)*Math.PI*2;
+                scene.add(cLight);
+            }
+        }
+    }
+}
+
+function updateCrystalNightMode(){
+    const night=!isDaytime();
+    scene.children.forEach(o=>{
+        if(o.userData&&o.userData.isCrystal){
+            o.material.emissiveIntensity=night?1.8:0.15;
+        }
+        if(o.userData&&o.userData.isCrystalLight){
+            o.intensity=night?1.8:0.0;
+        }
+    });
+}
+
+/* ═══════════════════════════════ SKY LIGHTING ═══════════════════════════════ */
+function buildSkyLighting(){
+    const day=isDaytime(),progress=Math.max(0,getDayProgress());
+    skyLight=new THREE.AmbientLight(day?0x9aaacc:0x111133,day?0.65:0.22);
+    scene.add(skyLight);
+
+    const SUN_DIST=14000;
+    const sa=progress*Math.PI,se=Math.sin(progress*Math.PI);
+    const sx=-Math.cos(sa)*SUN_DIST,sy=Math.max(300,se*SUN_DIST*0.65),sz=-Math.abs(Math.sin(sa))*SUN_DIST*0.45-3000;
+    const sunColor=(progress<0.12||progress>0.88)?0xFF8844:0xFFF5E0;
+
+    sunLight=new THREE.DirectionalLight(sunColor,day?2.4:0.0);
+    sunLight.position.set(sx,sy,sz);sunLight.target.position.set(0,0,0);
+    if(renderer.shadowMap.enabled){
+        sunLight.castShadow=true;sunLight.shadow.mapSize.setScalar(2048);
+        sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=30000;
+        sunLight.shadow.camera.left=sunLight.shadow.camera.bottom=-6000;
+        sunLight.shadow.camera.right=sunLight.shadow.camera.top=6000;
+        sunLight.shadow.bias=-0.0004;
+    }
+    scene.add(sunLight);scene.add(sunLight.target);
+
+    sunMesh=new THREE.Mesh(new THREE.SphereGeometry(450,16,16),new THREE.MeshBasicMaterial({color:sunColor,transparent:true,opacity:day?0.95:0}));
+    sunMesh.position.set(sx,sy,sz);scene.add(sunMesh);
+    [900,1600,2600].forEach((r,ri)=>{
+        const h=new THREE.Mesh(new THREE.SphereGeometry(r,10,10),new THREE.MeshBasicMaterial({color:sunColor,transparent:true,opacity:day?(0.11-ri*0.03):0,side:THREE.BackSide,depthWrite:false}));
+        h.position.set(sx,sy,sz);scene.add(h);
+    });
+
+    const h=getGMTHour();
+    const mAngle=(!day)?((h<6?(h+4)/10:((h-20)/4))*Math.PI):Math.PI*1.5;
+    const MOON_DIST=10000;
+    const mx=Math.cos(mAngle+Math.PI)*MOON_DIST,my=Math.max(200,(0.4+Math.sin(mAngle)*0.5)*MOON_DIST*0.45),mz=Math.sin(mAngle)*MOON_DIST*0.35-1200;
+    moonLight=new THREE.DirectionalLight(0xaabbdd,day?0:0.55);
+    moonLight.position.set(mx,my,mz);moonLight.target.position.set(0,0,0);
+    scene.add(moonLight);scene.add(moonLight.target);
+    const moonMesh=new THREE.Mesh(new THREE.SphereGeometry(250,12,12),new THREE.MeshBasicMaterial({color:0xddddee,transparent:true,opacity:day?0:0.9}));
+    moonMesh.position.set(mx,my,mz);scene.add(moonMesh);
+
+    let skyCol;
+    if(day){
+        if(progress<0.12)skyCol=new THREE.Color(0xff6633).lerp(new THREE.Color(0x5577cc),progress/0.12);
+        else if(progress>0.88)skyCol=new THREE.Color(0x5577cc).lerp(new THREE.Color(0xff3300),(progress-0.88)/0.12);
+        else skyCol=new THREE.Color(0x3355aa);
+    }else{skyCol=new THREE.Color(theme.sky);}
+    scene.background=skyCol;scene.fog=new THREE.FogExp2(skyCol,0.00008);
+}
+
+function buildStars(){
+    const sp=new Float32Array(1400*3);
+    for(let i=0;i<1400*3;i+=3){
+        const r=12000+Math.random()*4000,t=Math.random()*Math.PI*2,p=Math.acos(Math.random()*2-1);
+        sp[i]=r*Math.sin(p)*Math.cos(t);sp[i+1]=r*Math.sin(p)*Math.sin(t);sp[i+2]=r*Math.cos(p);
+    }
+    const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+    window._stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:14,transparent:true,opacity:isDaytime()?0:0.88}));
+    scene.add(window._stars);
+}
+
+/* ═══════════════════════════════ MONUMENT / STEELE (wider & clickable) ═══════════════════════════════ */
+function buildSteele(){
+    steeleCanvas=document.createElement('canvas');
+    steeleCanvas.width=1024;steeleCanvas.height=2048; // wider canvas for wider steele
+    steeleCtx=steeleCanvas.getContext('2d');
+    steeleTexture=new THREE.CanvasTexture(steeleCanvas);
+    drawSteeleLeaderboard([]);
+
+    const faceMat=new THREE.MeshStandardMaterial({
+        map:steeleTexture,roughness:0.12,metalness:0.9,
+        emissiveMap:steeleTexture,emissive:new THREE.Color(1,1,1),emissiveIntensity:0.14
+    });
+    const sideMat=new THREE.MeshStandardMaterial({
+        color:new THREE.Color(theme.accent).multiplyScalar(0.28),
+        roughness:0.08,metalness:0.97,
+        emissive:new THREE.Color(theme.accent),emissiveIntensity:0.1
+    });
+
+    const geo=new THREE.BoxGeometry(STEELE_WIDTH,STEELE_HEIGHT,STEELE_DEPTH,1,1,1);
+    steeleMesh=new THREE.Mesh(geo,[sideMat,sideMat,sideMat,sideMat,faceMat,faceMat]);
+    steeleMesh.position.set(0,STEELE_HEIGHT/2-2,0);
+    steeleMesh.castShadow=true;
+    steeleMesh.userData.isSteele=true;
+    scene.add(steeleMesh);
+
+    // Gold crown
+    const crownMat=new THREE.MeshStandardMaterial({color:0xC6A85E,metalness:1.0,roughness:0.04,emissive:0xC6A85E,emissiveIntensity:0.45});
+    const crown=new THREE.Mesh(new THREE.BoxGeometry(STEELE_WIDTH*1.12,44,STEELE_DEPTH*1.12),crownMat);
+    crown.position.set(0,STEELE_HEIGHT+20,0);scene.add(crown);
+
+    const spike=new THREE.Mesh(new THREE.ConeGeometry(STEELE_WIDTH*0.22,90,4),crownMat);
+    spike.position.set(0,STEELE_HEIGHT+65,0);spike.rotation.y=Math.PI/4;scene.add(spike);
+
+    // Wider edge strips
+    const edgeMat=new THREE.MeshBasicMaterial({color:new THREE.Color(theme.accent),transparent:true,opacity:0.75});
+    [[-STEELE_WIDTH/2-3,0],[STEELE_WIDTH/2+3,0]].forEach(([ex])=>{
+        const edge=new THREE.Mesh(new THREE.BoxGeometry(5,STEELE_HEIGHT,5),edgeMat);
+        edge.position.set(ex,STEELE_HEIGHT/2-2,0);scene.add(edge);
+    });
+
+    // Base plinth
+    const base=new THREE.Mesh(new THREE.BoxGeometry(STEELE_WIDTH*3.8,30,STEELE_DEPTH*3.8),new THREE.MeshStandardMaterial({color:0x223344,roughness:0.9,metalness:0.1}));
+    base.position.set(0,13,0);scene.add(base);
+    // Second tier
+    const base2=new THREE.Mesh(new THREE.BoxGeometry(STEELE_WIDTH*2.6,50,STEELE_DEPTH*2.6),new THREE.MeshStandardMaterial({color:0x1a2838,roughness:0.85,metalness:0.15}));
+    base2.position.set(0,43,0);scene.add(base2);
+
+    // Monument point light
+    const monoLight=new THREE.PointLight(new THREE.Color(theme.accent),2.8,2400);
+    monoLight.position.set(0,STEELE_HEIGHT*0.5,0);scene.add(monoLight);
+
+    // Pulsing halo
+    const haloMat=new THREE.MeshBasicMaterial({color:new THREE.Color(theme.accent),transparent:true,opacity:0.04,side:THREE.BackSide,depthWrite:false});
+    const halo=new THREE.Mesh(new THREE.SphereGeometry(STEELE_WIDTH*1.8,16,16),haloMat);
+    halo.position.set(0,STEELE_HEIGHT*0.5,0);halo.userData.isHalo=true;scene.add(halo);
+}
+
+function drawSteeleLeaderboard(entries){
+    if(!steeleCtx)return;
+    const ctx=steeleCtx;
+    const W=1024,H=2048;
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#010609';ctx.fillRect(0,0,W,H);
+
+    // Decorative border gradient
+    const border=ctx.createLinearGradient(0,0,0,H);
+    border.addColorStop(0,'rgba(198,168,94,0.9)');
+    border.addColorStop(0.5,'rgba(78,202,255,0.5)');
+    border.addColorStop(1,'rgba(198,168,94,0.9)');
+    ctx.strokeStyle=border;ctx.lineWidth=14;ctx.strokeRect(7,7,W-14,H-14);
+    ctx.strokeStyle='rgba(198,168,94,0.22)';ctx.lineWidth=3;ctx.strokeRect(24,24,W-48,H-48);
+
+    // Header
+    ctx.fillStyle='#C6A85E';
+    ctx.font='bold 82px Orbitron, monospace';
+    ctx.textAlign='center';ctx.shadowColor='#C6A85E';ctx.shadowBlur=40;
+    ctx.fillText('LEADERBOARD',W/2,120);ctx.shadowBlur=0;
+
+    ctx.strokeStyle='rgba(198,168,94,0.65)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(50,155);ctx.lineTo(W-50,155);ctx.stroke();
+
+    ctx.fillStyle='rgba(78,202,255,0.75)';
+    ctx.font='30px Orbitron, monospace';
+    ctx.fillText(selectedIndustry.toUpperCase(),W/2,200);
+
+    ctx.strokeStyle='rgba(78,202,255,0.3)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(50,220);ctx.lineTo(W-50,220);ctx.stroke();
+
+    const startY=270,rowH=145,maxEntries=12;
+    const displayEntries=entries.slice(0,maxEntries);
+
+    if(displayEntries.length===0){
+        ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='28px monospace';
+        ctx.fillText('NO BRANDS YET',W/2,startY+90);
+        ctx.fillText('CLAIM A SLOT TO APPEAR',W/2,startY+135);
+    }else{
+        displayEntries.forEach((entry,idx)=>{
+            const y=startY+idx*rowH;
+            const rowAlpha=idx===0?0.14:idx===1?0.09:idx===2?0.07:0.04;
+            ctx.fillStyle=`rgba(198,168,94,${rowAlpha})`;ctx.fillRect(34,y-22,W-68,rowH-10);
+            const rankColors=['#FFD700','#C0C0C0','#CD7F32'];
+            ctx.fillStyle=idx<3?rankColors[idx]:'rgba(255,255,255,0.38)';
+            ctx.font=`bold ${idx<3?64:50}px Orbitron, monospace`;
+            ctx.textAlign='left';
+            if(idx===0){ctx.shadowColor='#FFD700';ctx.shadowBlur=28;}
+            ctx.fillText('#'+(idx+1),46,y+58);ctx.shadowBlur=0;
+            ctx.fillStyle='#ffffff';ctx.font=`bold 44px Rajdhani, sans-serif`;
+            ctx.fillText((entry.brandName||'?').toUpperCase().slice(0,18),46,y+102);
+            ctx.fillStyle='#C6A85E';ctx.font='bold 36px Space Mono, monospace';
+            ctx.textAlign='right';ctx.fillText(Math.floor(entry.score||0).toLocaleString()+' pts',W-46,y+58);
+            ctx.fillStyle='rgba(78,202,255,0.7)';ctx.font='24px Space Mono, monospace';
+            ctx.fillText((entry.slotCount||0)+' slots',W-46,y+96);ctx.textAlign='left';
+            if(idx<displayEntries.length-1){
+                ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
+                ctx.beginPath();ctx.moveTo(34,y+rowH-12);ctx.lineTo(W-34,y+rowH-12);ctx.stroke();
+            }
+        });
+    }
+
+    ctx.fillStyle='rgba(198,168,94,0.32)';ctx.font='22px Orbitron, monospace';ctx.textAlign='center';
+    ctx.fillText('UPDATES EVERY MINUTE',W/2,H-55);
+    ctx.strokeStyle='rgba(198,168,94,0.4)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(50,H-78);ctx.lineTo(W-50,H-78);ctx.stroke();
+
+    if(steeleTexture)steeleTexture.needsUpdate=true;
+}
+
+/* ═══════════════════════════════ SLOT GRID (InstancedMesh) ═══════════════════════════════ */
+function buildSlotGrid(){
+    const total=GRID_SIZE*GRID_SIZE;
+    const off=(GRID_SIZE-1)*SLOT_SPACING*0.5;
+
+    // SLOT_SIZE is used for geometry; SLOT_SPACING for placement — gap = SLOT_SPACING - SLOT_SIZE = 13 units
+    const baseGeo=new THREE.BoxGeometry(SLOT_SIZE,1,SLOT_SIZE);
+    const baseMat=new THREE.MeshStandardMaterial({roughness:0.88,metalness:0.05});
+    loadTex(theme.tex1,0.6,0.6,(t)=>{if(t){baseMat.map=t;baseMat.roughnessMap=t;baseMat.color.setHex(0xcccccc);baseMat.needsUpdate=true;}});
+
+    const iMesh=new THREE.InstancedMesh(baseGeo,baseMat,total);
+    iMesh.receiveShadow=true;iMesh.castShadow=false;
+    const dummy=new THREE.Object3D(),col=new THREE.Color();
+
+    for(let i=0;i<total;i++){
+        const row=Math.floor(i/GRID_SIZE),c=i%GRID_SIZE;
+        const x=c*SLOT_SPACING-off,z=row*SLOT_SPACING-off;
+        const bh=Math.max(0.1,getSlotHeight(i));
+        dummy.position.set(x,bh/2-2,z);dummy.scale.set(1,bh,1);dummy.updateMatrix();
+        iMesh.setMatrixAt(i,dummy.matrix);iMesh.setColorAt(i,col.set(getSlotColor(i)));
+        slotData.push({slotIndex:i,ownerId:null,buildingFloors:0,wx:x,wz:z,bh:bh});
+    }
+    iMesh.instanceMatrix.needsUpdate=true;iMesh.instanceColor.needsUpdate=true;
+    scene.add(iMesh);window._iMesh=iMesh;slotMeshes=[iMesh];
+}
+
+/* ═══════════════════════════════ SLOT VISUALS ═══════════════════════════════ */
+function refreshSlotMesh(i){
+    const iMesh=window._iMesh;if(!iMesh)return;
+    const col=new THREE.Color();
+    col.set(getSlotColor(i,hoveredSlot===i,selectedSlot===i));
+    iMesh.setColorAt(i,col);iMesh.instanceColor.needsUpdate=true;
+}
+
+function addBuilding(i,floors,color){
+    const existing=scene.getObjectByName('b'+i);if(existing)scene.remove(existing);
+    const d=slotData[i];if(!d)return;
+    const fh=55,bw=SLOT_SIZE*0.65,bh=floors*fh;
+    const grp=new THREE.Group();grp.name='b'+i;
+    const bMat=new THREE.MeshStandardMaterial({color:new THREE.Color(color||theme.accent),emissive:new THREE.Color(color||theme.accent),emissiveIntensity:0.4,roughness:0.2,metalness:0.8});
+    const body=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bw),bMat);
+    body.position.y=d.bh/2+bh/2-2;body.castShadow=true;body.userData.isBuilding=true;
+    const roof=new THREE.Mesh(new THREE.PlaneGeometry(bw*0.88,bw*0.88),new THREE.MeshBasicMaterial({color:new THREE.Color(color||theme.accent),transparent:true,opacity:0.65,side:THREE.DoubleSide,depthWrite:false}));
+    roof.rotation.x=-Math.PI/2;roof.position.y=d.bh/2+bh-2+0.02;roof.userData.isRoof=true;
+    grp.add(body);grp.add(roof);grp.position.set(d.wx,0,d.wz);scene.add(grp);
+}
+
+/* ═══════════════════════════════ SLOT PANEL ═══════════════════════════════ */
+function openSlotPanel(i){
+    selectedSlot=i;refreshSlotMesh(i);
+    const d=slotData[i],type=getSlotType(i),price=getSlotPrice(i);
+    const h=getSlotHeight(i);
+    const isOwner=d.ownerId===currentBrandId,isTaken=!!d.ownerId&&!isOwner;
+    document.getElementById('sp-tag').textContent='// SLOT #'+String(i).padStart(5,'0');
+    document.getElementById('sp-title').textContent='Slot #'+String(i).padStart(5,'0');
+    document.getElementById('sp-type').textContent=type;
+    document.getElementById('sp-price').textContent=price.toLocaleString()+' ₿';
+    document.getElementById('sp-status').textContent=isOwner?'OWNED BY YOU':isTaken?'OWNED':'AVAILABLE';
+    document.getElementById('sp-status').className='sp-stat-val '+(isOwner?'gold':isTaken?'cyan':'green');
+    document.getElementById('sp-owner').textContent=d.ownerId?d.ownerId.slice(0,8)+'…':'—';
+    const altEl=document.getElementById('sp-altitude');
+    if(type==='MOUNTAIN'){
+        const altPct=Math.round((h/MOUNTAIN_MAX_HEIGHT)*100);
+        altEl.textContent='⛰ ALTITUDE: '+Math.round(h)+'m · '+altPct+'% of peak · '+Math.round(h/MOUNTAIN_MAX_HEIGHT*7+1)+'× price premium';
+        altEl.style.display='block';
+    }else{altEl.style.display='none';}
+    const btn=document.getElementById('sp-btn');
+    if(isOwner){btn.textContent='⬆ UPGRADE BUILDING';btn.className='sp-btn owned';}
+    else if(isTaken){btn.textContent='✕ SLOT TAKEN';btn.className='sp-btn other';}
+    else{btn.textContent='◎ CLAIM — '+price.toLocaleString()+' ₿';btn.className='sp-btn buy';}
+    document.getElementById('slot-panel').classList.add('show');
+}
+
+function openMonumentPanel(){
+    const occ=slotData.filter(s=>s.ownerId).length;
+    document.getElementById('sp-tag').textContent='// MONUMENT';
+    document.getElementById('sp-title').textContent='🏛 The Grand Steele';
+    document.getElementById('sp-type').textContent='MONUMENT';
+    document.getElementById('sp-price').textContent='N/A';
+    document.getElementById('sp-status').textContent=selectedIndustry.toUpperCase();
+    document.getElementById('sp-status').className='sp-stat-val gold';
+    document.getElementById('sp-owner').textContent=occ+' brands';
+    const altEl=document.getElementById('sp-altitude');
+    altEl.textContent='◎ Industry leaderboard monument — '+STEELE_HEIGHT+'m tall';
+    altEl.style.display='block';
+    const btn=document.getElementById('sp-btn');
+    btn.textContent='⬆ VIEW LEADERBOARD';
+    btn.className='sp-btn monument';
+    btn.onclick=()=>animateCameraToSteeleTop();
+    document.getElementById('slot-panel').classList.add('show');
+}
+
+function closeSlotPanel(){
+    if(selectedSlot!==null){refreshSlotMesh(selectedSlot);selectedSlot=null;}
+    document.getElementById('sp-btn').onclick=handleSlotAction; // restore default
+    document.getElementById('slot-panel').classList.remove('show');
+}
+
+/* ═══════════════════════════════ SLOT ACTIONS ═══════════════════════════════ */
+async function handleSlotAction(){
+    if(selectedSlot===null)return;
+    const d=slotData[selectedSlot],price=getSlotPrice(selectedSlot);
+    if(d.ownerId===currentBrandId){
+        const nf=(d.buildingFloors||1)+1,cost=nf*600;
+        if(userCoins<cost){alert('Need '+cost.toLocaleString()+' ₿ to upgrade');return;}
+        await upgradeBuilding(selectedSlot,nf,cost);return;
+    }
+    if(!d.ownerId){
+        if(!currentBrandId){alert('Please log in');return;}
+        if(userCoins<price){alert('Need '+price.toLocaleString()+' ₿ to claim');return;}
+        await purchaseSlot(selectedSlot,price);
+    }
+}
+async function purchaseSlot(i,price){
+    const btn=document.getElementById('sp-btn');
+    btn.textContent='…PROCESSING';btn.style.opacity='0.6';
+    try{
+        slotData[i].ownerId=currentBrandId;slotData[i].buildingFloors=1;
+        userCoins-=price;updateCoinDisplay();refreshSlotMesh(i);addBuilding(i,1);
+        const db=firebase.firestore(),batch=db.batch();
+        batch.set(db.collection('worlds').doc(worldKey).collection('slots').doc(String(i)),{slotIndex:i,ownerId:currentBrandId,buildingFloors:1,locked:false,type:getSlotType(i),altitude:getSlotHeight(i),purchasedAt:firebase.firestore.FieldValue.serverTimestamp(),pricePaid:price});
+        batch.update(db.collection('brands').doc(currentBrandId),{coins:firebase.firestore.FieldValue.increment(-price),slotCount:firebase.firestore.FieldValue.increment(1),coinsSpentTotal:firebase.firestore.FieldValue.increment(price)});
+        await batch.commit();
+        updateStatsBar();updateProgressBar();openSlotPanel(i);btn.style.opacity='1';
+    }catch(err){
+        slotData[i].ownerId=null;slotData[i].buildingFloors=0;
+        userCoins+=price;updateCoinDisplay();refreshSlotMesh(i);
+        alert('Purchase failed: '+err.message);btn.style.opacity='1';openSlotPanel(i);
+    }
+}
+async function upgradeBuilding(i,nf,cost){
+    try{
+        userCoins-=cost;updateCoinDisplay();slotData[i].buildingFloors=nf;addBuilding(i,nf);
+        await firebase.firestore().collection('worlds').doc(worldKey).collection('slots').doc(String(i)).update({buildingFloors:nf});
+        await firebase.firestore().collection('brands').doc(currentBrandId).update({coins:firebase.firestore.FieldValue.increment(-cost),coinsSpentTotal:firebase.firestore.FieldValue.increment(cost)});
+        openSlotPanel(i);
+    }catch(err){userCoins+=cost;updateCoinDisplay();slotData[i].buildingFloors=nf-1;addBuilding(i,nf-1);alert('Upgrade failed: '+err.message);}
+}
+
+/* ═══════════════════════════════ WORLD DATA ═══════════════════════════════ */
+async function loadWorldData(){
+    try{
+        const db=firebase.firestore(),wRef=db.collection('worlds').doc(worldKey);
+        const wDoc=await wRef.get();
+        if(!wDoc.exists)await wRef.set({industry:selectedIndustry,occupiedCount:0,totalSlots:GRID_SIZE*GRID_SIZE,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        const snap=await wRef.collection('slots').get();
+        snap.forEach(doc=>{const d=doc.data();if(d.slotIndex>=0&&d.slotIndex<slotData.length){slotData[d.slotIndex].ownerId=d.ownerId||null;slotData[d.slotIndex].buildingFloors=d.buildingFloors||1;}});
+        slotData.forEach((d,i)=>{refreshSlotMesh(i);if(d.ownerId)addBuilding(i,d.buildingFloors||1,d.ownerId===currentBrandId?theme.accent:0x4488ff);});
+        const bDoc=await firebase.firestore().collection('brands').doc(currentBrandId).get();
+        if(bDoc.exists){userCoins=bDoc.data().coins||0;updateCoinDisplay();}
+        updateStatsBar();updateProgressBar();loadLeaderboard();
+        wRef.collection('slots').onSnapshot(snap=>{
+            snap.docChanges().forEach(ch=>{if(ch.type==='added'||ch.type==='modified'){const d=ch.doc.data(),i=d.slotIndex;if(i>=0&&i<slotData.length){slotData[i].ownerId=d.ownerId;slotData[i].buildingFloors=d.buildingFloors||1;refreshSlotMesh(i);if(d.ownerId)addBuilding(i,d.buildingFloors||1,d.ownerId===currentBrandId?theme.accent:0x4488ff);if(i===selectedSlot)openSlotPanel(i);}}}); updateStatsBar();updateProgressBar();});
+        firebase.firestore().collection('brands').doc(currentBrandId).onSnapshot(doc=>{if(doc.exists){userCoins=doc.data().coins||0;updateCoinDisplay();}});
+    }catch(err){console.warn('World data:',err);}
+}
+
+let leaderboardEntries=[];
+async function loadLeaderboard(){
+    try{
+        const snap=await firebase.firestore().collection('worlds').doc(worldKey).collection('leaderboard').orderBy('score','desc').limit(12).get();
+        leaderboardEntries=[];
+        const lbc=document.getElementById('lb-content');lbc.innerHTML='';lbc.className='';
+        if(!snap.empty){
+            snap.forEach((doc,idx)=>{
+                const d=doc.data();leaderboardEntries.push(d);
+                const div=document.createElement('div');div.className='lb-item';
+                const col='#'+((d.color||0xC6A85E)>>>0).toString(16).padStart(6,'0');
+                div.innerHTML=`<span class="lb-rank${idx===0?' gold':''}">${idx+1}</span><span class="lb-dot" style="background:${col}"></span><span class="lb-name">${d.brandName||'?'}</span><span class="lb-score">${Math.floor(d.score||0)}</span>`;
+                lbc.appendChild(div);
+            });
+        }else{lbc.innerHTML='<div class="lb-empty">No brands yet</div>';}
+        drawSteeleLeaderboard(leaderboardEntries);
+    }catch(e){console.warn('Leaderboard:',e);}
+}
+
+/* ═══════════════════════════════ HUD ═══════════════════════════════ */
+function updateCoinDisplay(){document.getElementById('coin-amount').textContent=userCoins.toLocaleString();}
+function updateStatsBar(){
+    const occ=slotData.filter(s=>s.ownerId).length;
+    document.getElementById('stat-occupied').textContent=occ.toLocaleString();
+    document.getElementById('stat-total').textContent=(GRID_SIZE*GRID_SIZE).toLocaleString();
+    document.getElementById('stat-price').textContent=getSlotPrice(0).toLocaleString();
+}
+function updateProgressBar(){
+    const total=Math.min(GRID_SIZE*GRID_SIZE,MAX_SLOTS);
+    const occ=slotData.filter(s=>s.ownerId).length;
+    const pct=Math.min(100,(occ/total)*100);
+    document.getElementById('prog-claimed').textContent=occ.toLocaleString();
+    document.getElementById('prog-total').textContent=total.toLocaleString();
+    document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+/* ═══════════════════════════════ GLASSMORPHIC WORLD TOOLTIP ═══════════════════════════════ */
+function showWorldTooltip(x,y,icon,name,sub,badgeText,badgeClass){
+    document.getElementById('wt-icon').textContent=icon;
+    document.getElementById('wt-name').textContent=name;
+    document.getElementById('wt-sub').textContent=sub;
+    const badge=document.getElementById('wt-badge');
+    if(badgeText){badge.textContent=badgeText;badge.className='wt-badge '+(badgeClass||'gold');badge.style.display='inline-block';}
+    else{badge.style.display='none';}
+    const tip=document.getElementById('world-tooltip');
+    tip.style.left=x+'px';tip.style.top=(y-16)+'px';
+    tip.classList.add('show');
+}
+function hideWorldTooltip(){document.getElementById('world-tooltip').classList.remove('show');}
+
+/* ═══════════════════════════════ MOUSE / INTERACTION ═══════════════════════════════ */
+function onMouseMove(e){
+    mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+
+    const iMesh=window._iMesh;
+    let hitSlot=false,hitWorld=false;
+
+    // Check instanced slots first
+    if(iMesh){
+        const hits=raycaster.intersectObject(iMesh);
+        if(hits.length>0&&hits[0].instanceId!=null){
+            hitSlot=true;
+            const idx=hits[0].instanceId;
+            document.body.style.cursor='pointer';
+            if(hoveredSlot!==idx){
+                if(hoveredSlot!=null&&hoveredSlot!==selectedSlot){const pv=hoveredSlot;hoveredSlot=null;refreshSlotMesh(pv);}
+                hoveredSlot=idx;if(idx!==selectedSlot)refreshSlotMesh(idx);
+            }
+            const d=slotData[idx],type=getSlotType(idx),price=getSlotPrice(idx);
+            document.getElementById('slt-name').textContent='SLOT #'+String(idx).padStart(5,'0')+' · '+type;
+            document.getElementById('slt-sub').textContent=d.ownerId?(d.ownerId===currentBrandId?'Your Slot':'Owned'):'Available · '+price.toLocaleString()+' ₿';
+            const tip=document.getElementById('slot-tooltip');tip.style.left=e.clientX+'px';tip.style.top=(e.clientY-14)+'px';tip.classList.add('show');
+            hideWorldTooltip();
+        }
+    }
+
+    if(!hitSlot){
+        // Clear slot hover
+        document.getElementById('slot-tooltip').classList.remove('show');
+        if(hoveredSlot!=null&&hoveredSlot!==selectedSlot){const pv=hoveredSlot;hoveredSlot=null;refreshSlotMesh(pv);}
+
+        // Check world objects: steele, mountains, crystals, forest
+        const worldObjects=scene.children.filter(o=>
+            (o.userData&&(o.userData.isSteele||o.userData.isMountain||o.userData.isCrystal||o.userData.isForest))
+            && o.visible
+        );
+        const wHits=raycaster.intersectObjects(worldObjects,false);
+        if(wHits.length>0){
+            hitWorld=true;document.body.style.cursor='pointer';
+            const hit=wHits[0].object;
+            if(hit.userData.isSteele){
+                showWorldTooltip(e.clientX,e.clientY,'🏛','THE GRAND STEELE','Industry leaderboard monument','CLICK TO EXPLORE','gold');
+            }else if(hit.userData.isMountain){
+                const h=hit.userData.mountainHeight||'?';
+                showWorldTooltip(e.clientX,e.clientY,'⛰','BORDER MOUNTAIN','Altitude: '+h.toLocaleString()+'m — decorative zone','HIGH ALTITUDE','gold');
+            }else if(hit.userData.isCrystal){
+                const ch=hit.userData.crystalHeight||'?';
+                const night=!isDaytime();
+                showWorldTooltip(e.clientX,e.clientY,'💎','GLOWING CRYSTAL',night?'Night illuminator — '+ch+'m crystal':'Crystal formation — '+ch+'m',night?'NIGHT ACTIVE':'DORMANT',night?'green':'cyan');
+            }else if(hit.userData.isForest){
+                showWorldTooltip(e.clientX,e.clientY,'🌲','BORDER FOREST','Decorative tree line — world boundary','PERIMETER','cyan');
+            }
+        }else{
+            hideWorldTooltip();
+            document.body.style.cursor='default';
+        }
+    }
+}
+
+function onClick(e){
+    if(sidebar.classList.contains('open'))return;
+    if(e.target.closest('#slot-panel')||e.target.closest('#back-btn')||e.target.closest('#topbar')||e.target.closest('#sidebar'))return;
+    const cx=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+    const cy=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+    mouse.x=(cx/innerWidth)*2-1;mouse.y=-(cy/innerHeight)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+
+    // Check steele first
+    if(steeleMesh){
+        const sHits=raycaster.intersectObject(steeleMesh);
+        if(sHits.length>0){
+            openMonumentPanel();
+            animateCameraToSteeleTop();
+            return;
+        }
+    }
+
+    // Check slots
+    const iMesh=window._iMesh;if(!iMesh)return;
+    const hits=raycaster.intersectObject(iMesh);
+    if(hits.length>0&&hits[0].instanceId!=null){
+        const idx=hits[0].instanceId;
+        openSlotPanel(idx);
+        // camera zoom only on double-click (see onDblClick)
+    }else{
+        closeSlotPanel();
+    }
+}
+
+function onDblClick(e){
+    if(sidebar.classList.contains('open'))return;
+    if(e.target.closest('#slot-panel')||e.target.closest('#back-btn')||e.target.closest('#topbar')||e.target.closest('#sidebar'))return;
+    mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const iMesh=window._iMesh;if(!iMesh)return;
+    const hits=raycaster.intersectObject(iMesh);
+    if(hits.length>0&&hits[0].instanceId!=null){
+        const d=slotData[hits[0].instanceId];
+        if(d)animateCameraToSlot(d.wx,d.bh,d.wz);
+    }
+}
+
+// Touch: single tap = panel, double tap = camera zoom
+let _lastTap=0;
+function onTouchEnd(e){
+    const now=Date.now();
+    const dt=now-_lastTap;
+    _lastTap=now;
+    if(dt<300&&dt>0){
+        // double-tap → zoom
+        onDblClick(e.changedTouches?{clientX:e.changedTouches[0].clientX,clientY:e.changedTouches[0].clientY,target:e.target,closest:e.target.closest.bind(e.target)}:e);
+    } else {
+        onClick(e);
+    }
+}
+
+/* ═══════════════════════════════ ANIMATE ═══════════════════════════════ */
+function animate(ts){
+    requestAnimationFrame(animate);frame++;time=ts*0.001;
+
+    // Night/day toggle every 18000 frames (~5 min at 60fps)
+    if(frame%18000===0){
+        const night=!isDaytime();
+        if(window._stars)window._stars.material.opacity=night?0.88:0;
+        if(skyLight)skyLight.intensity=isDaytime()?0.65:0.22;
+        updateCrystalNightMode();
+    }
+
+    // Crystal glow pulse (night = stronger, day = subtle)
+    if(frame%2===0){
+        const night=!isDaytime();
+        crystalMeshes.forEach(c=>{
+            const phase=c.userData.crystalPhase||0;
+            const pulse=Math.sin(time*1.2+phase)*0.5+0.5; // 0–1
+            if(night){
+                c.material.emissiveIntensity=1.2+pulse*1.0;
+            }else{
+                c.material.emissiveIntensity=0.05+pulse*0.1;
+            }
+        });
+        // Crystal point lights pulse too
+        scene.children.forEach(o=>{
+            if(o.userData&&o.userData.isCrystalLight){
+                const night2=!isDaytime();
+                const pulse=Math.sin(time*1.1+o.userData.crystalPhase)*0.5+0.5;
+                o.intensity=night2?(1.0+pulse*1.4):0.0;
+            }
+        });
+    }
+
+    // Steele gentle sway
+    if(steeleMesh)steeleMesh.rotation.y=Math.sin(time*0.08)*0.04;
+
+    // Halo pulse
+    scene.children.forEach(o=>{
+        if(o.userData&&o.userData.isHalo){
+            o.material.opacity=0.02+Math.sin(time*1.5)*0.02;
+            o.scale.setScalar(1+Math.sin(time*0.7)*0.04);
+        }
+    });
+
+    if(theme.lavaBands&&frame%2===0){
+        scene.children.forEach(o=>{
+            if(o.userData&&o.userData.isLava){
+                o.material.opacity=0.2+Math.sin(time*0.8+o.userData.lavaPhase)*0.2;
+                o.position.x+=Math.sin(time*0.3+o.userData.lavaPhase)*0.5;
+            }
+        });
+    }
+
+    if(frame%3===0){
+        slotData.forEach((d,i)=>{
+            if(!d||!d.ownerId)return;
+            const grp=scene.getObjectByName('b'+i);if(!grp)return;
+            const b=grp.children.find(c=>c.userData.isBuilding);
+            if(b)b.position.y=slotData[i].bh/2+b.geometry.parameters.height/2-2+Math.sin(time*1.4+i*0.3)*0.8;
+            const r=grp.children.find(c=>c.userData.isRoof);
+            if(r)r.material.opacity=0.3+Math.sin(time*2+i)*0.3;
+        });
+    }
+
+    controls.update();renderer.render(scene,camera);
+}
+
+/* ═══════════════════════════════ RESIZE ═══════════════════════════════ */
+window.addEventListener('resize',()=>{if(!camera||!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+/* ═══════════════════════════════ USER PROFILE ═══════════════════════════════ */
+async function populateUser(user){
+    const ADMIN_EMAIL='johnrufai242@gmail.com';
+    const db=firebase.firestore();
+    let name='',handle='',photoURL=user.photoURL||'',status='inactive',role='brand';
+
+    if(user.email===ADMIN_EMAIL){
+        // Admin fast-path — may have no Firestore doc
+        role='admin';
+        name=user.displayName||'Admin';
+        handle='@admin';
+        photoURL=user.photoURL||'';
+        status='active';
+    } else {
+        // Check users doc for role field first
+        try{
+            const uSnap=await db.collection('users').doc(user.uid).get();
+            if(uSnap.exists){
+                const d=uSnap.data();
+                if(d.role==='admin'){role='admin';name=d.username||user.displayName||'Admin';handle='@'+(d.username||'admin');photoURL=d.photoURL||photoURL;status='active';}
+                else if(d.role==='user'){role='user';name=d.username||d.displayName||'';handle='@'+(d.username||'');photoURL=d.photoURL||photoURL;}
+            }
+        }catch(e){}
+
+        // If still 'brand', try brands doc
+        if(role==='brand'){
+            try{
+                const bSnap=await db.collection('brands').doc(user.uid).get();
+                if(bSnap.exists){const d=bSnap.data();name=d.brandName||'';handle='@'+(d.username||'');photoURL=d.photoURL||photoURL;status=d.activationStatus==='active'?'active':'inactive';}
+            }catch(e){}
+        }
+    }
+
+    // Topbar
+    document.getElementById('topUserAvatar').src=photoURL||'';
+    document.getElementById('topUsername').textContent=handle||('@'+name.slice(0,12));
+
+    // Build role-correct sidebar
+    buildSidebar({name,handle,photoURL,status,role});
+
+    return user.uid;
+}
+
+/* ═══════════════════════════════ BOOT ═══════════════════════════════ */
+window.addEventListener('load',()=>{
+    const unsub=firebase.auth().onAuthStateChanged(async user=>{
+        unsub();
+        if(!user){window.location.href='../index.html';return;}
+        try{
+            currentBrandId=await populateUser(user);
+            const params=new URLSearchParams(window.location.search);
+            selectedIndustry=params.get('industry')||sessionStorage.getItem('bdu_selected_industry')||'Technology';
+            theme=THEMES[selectedIndustry]||THEMES['Technology'];
+            worldKey=selectedIndustry.toLowerCase().replace(/\s+/g,'_')+'_0';
+            document.getElementById('ld-title').textContent=selectedIndustry.toUpperCase();
+            document.getElementById('ld-sub').textContent='Building world…';
+            document.title=selectedIndustry+' World — Billion Dollar Universe';
+            document.getElementById('whud-name').textContent=selectedIndustry.toUpperCase();
+            document.getElementById('world-title-bar').textContent=selectedIndustry.toUpperCase()+' WORLD';
+
+            initMountainCentres();
+            initScene();
+            buildTerrain();  // includes crystals
+            buildSteele();
+            buildSlotGrid();
+
+            window.addEventListener('mousemove',onMouseMove);
+            window.addEventListener('click',onClick);
+            window.addEventListener('dblclick',onDblClick);
+            window.addEventListener('touchend',onTouchEnd,{passive:true});
+
+            await loadWorldData();
+
+            setTimeout(()=>{
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('world-hud').classList.add('show');
+                document.getElementById('leaderboard').classList.add('show');
+                document.getElementById('stats-bar').classList.add('show');
+                document.getElementById('coin-hud').classList.add('show');
+                document.getElementById('slot-progress').classList.add('show');
+                animateCameraToSteele();
+            },700);
+
+            requestAnimationFrame(animate);
+            setInterval(()=>{loadLeaderboard();},60000);
+
+        }catch(err){console.error('Boot:',err);document.getElementById('ld-sub').textContent='Error — '+err.message;}
+    });
+});
+</script>
+</body>
+</html>

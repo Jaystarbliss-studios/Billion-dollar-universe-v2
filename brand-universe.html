@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Universe — Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:       #C6A85E;
+            --gold-glow: rgba(198,168,94,0.35);
+            --cyan:       #4ECAFF;
+            --panel:      rgba(4,10,22,0.88);
+            --edge:       rgba(78,202,255,0.15);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        #canvas-container {
+            width: 100vw; height: 100vh;
+            position: fixed; top: 0; left: 0;
+        }
+
+        /* ── NAVBAR ── */
+        #topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 800;
+            background: linear-gradient(180deg, rgba(2,6,16,0.82) 0%, rgba(2,6,16,0.0) 100%);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .topbar-logo { width: 30px; height: auto; display: block; }
+        .topbar-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 10px; letter-spacing: 2.5px;
+            color: #fff; text-transform: uppercase; white-space: nowrap; opacity: 0.85;
+        }
+        #search-container { flex: 1; max-width: 440px; margin: 0 24px; position: relative; }
+        #search-bar {
+            width: 100%; padding: 9px 20px;
+            font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 500;
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.14); border-radius: 50px;
+            color: #fff; outline: none; transition: all 0.3s; letter-spacing: 0.3px;
+        }
+        #search-bar:focus {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(198,168,94,0.55);
+            box-shadow: 0 0 24px rgba(198,168,94,0.18);
+        }
+        #search-bar::placeholder { color: rgba(255,255,255,0.45); }
+        #search-results {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background: rgba(4,10,24,0.96); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(78,202,255,0.18); border-radius: 14px;
+            max-height: 340px; overflow-y: auto; display: none;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 30px rgba(78,202,255,0.06);
+        }
+        #search-results.show { display: block; animation: srSlide 0.2s ease; }
+        @keyframes srSlide { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+        .search-result-item {
+            padding: 13px 20px; color: rgba(220,235,255,0.85); cursor: pointer;
+            font-size: 14px; font-weight: 600; display: flex; align-items: center;
+            justify-content: space-between; border-bottom: 1px solid rgba(78,202,255,0.06);
+            transition: all 0.18s; letter-spacing: 0.3px;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: rgba(198,168,94,0.12); color: #fff; padding-left: 26px; }
+        .search-result-item .arrow { color: var(--gold); opacity: 0; transition: opacity 0.18s; font-size: 12px; }
+        .search-result-item:hover .arrow { opacity: 1; }
+        .no-results { padding: 18px 20px; color: rgba(255,255,255,0.3); text-align: center; font-size: 13px; font-family: 'Orbitron', monospace; letter-spacing: 1px; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .user-chip { display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; flex-shrink: 0; box-shadow: 0 0 10px rgba(198,168,94,0.3); }
+        .user-name { font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--gold); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+        #menu-btn {
+            width: 36px; height: 36px; background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 5px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        #menu-btn:hover { background: rgba(198,168,94,0.15); border-color: rgba(198,168,94,0.4); }
+        #menu-btn span { display: block; width: 16px; height: 1.5px; background: #fff; border-radius: 2px; transition: all 0.25s; }
+        #menu-btn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+        #menu-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        #menu-btn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+        /* ── SIDEBAR ── */
+        #sidebar { position: fixed; top: 0; right: 0; width: 300px; height: 100vh; z-index: 900; transform: translateX(100%); transition: transform 0.38s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; }
+        #sidebar.open { transform: translateX(0); }
+        .sidebar-backdrop { position: fixed; inset: 0; z-index: 899; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .sidebar-backdrop.show { opacity: 1; pointer-events: all; }
+        .sidebar-inner { flex: 1; background: linear-gradient(180deg, rgba(4,10,24,0.97) 0%, rgba(6,14,30,0.97) 100%); border-left: 1px solid rgba(78,202,255,0.15); display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .sidebar-inner::before { content: ''; display: block; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), var(--cyan), var(--gold), transparent); background-size: 200% 100%; animation: sbScan 3s linear infinite; flex-shrink: 0; }
+        @keyframes sbScan { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        .sb-header { padding: 54px 20px 16px; border-bottom: 1px solid rgba(78,202,255,0.08); flex-shrink: 0; }
+        .sb-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .sb-avatar { width: 48px; height: 48px; border-radius: 10px; border: 1.5px solid var(--gold); object-fit: cover; box-shadow: 0 0 16px rgba(198,168,94,0.3); }
+        .sb-name { font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.8px; margin-bottom: 3px; word-break: break-all; }
+        .sb-handle { font-family: 'Space Mono', monospace; font-size: 9px; color: rgba(180,210,230,0.5); }
+        .sb-role-chip { display: inline-block; margin-top: 5px; padding: 2px 8px; border-radius: 3px; font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 1.5px; font-weight: 700; }
+        .sb-role-user  { background: rgba(78,202,255,0.1);  color: var(--cyan); border: 1px solid rgba(78,202,255,0.3); }
+        .sb-role-brand { background: rgba(198,168,94,0.1);  color: var(--gold); border: 1px solid rgba(198,168,94,0.3); }
+        .sb-role-admin { background: rgba(255,64,96,0.1);   color: #FF4060;     border: 1px solid rgba(255,64,96,0.3); }
+        .sb-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 3px; font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 1.5px; font-weight: 700; }
+        .sb-status.active { background: rgba(0,245,160,0.08); color: #00F5A0; border: 1px solid rgba(0,245,160,0.25); }
+        .sb-status.inactive { background: rgba(180,180,180,0.08); color: #888; border: 1px solid rgba(180,180,180,0.18); }
+        .sb-status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+        .sb-status.active .sb-status-dot { animation: blink 1.5s ease infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        .sb-sections { flex: 1; }
+        .sb-section { padding: 16px 20px 8px; flex-shrink: 0; }
+        .sb-section-label { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 2.5px; color: rgba(180,210,230,0.3); font-weight: 700; margin-bottom: 8px; }
+        .sb-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 6px; cursor: pointer; transition: all 0.18s; margin-bottom: 2px; color: rgba(200,225,240,0.7); font-size: 13px; font-weight: 600; letter-spacing: 0.3px; border: 1px solid transparent; }
+        .sb-item:hover { background: rgba(78,202,255,0.07); border-color: rgba(78,202,255,0.12); color: #fff; padding-left: 16px; }
+        .sb-item:hover .sb-item-icon { color: var(--cyan); }
+        .sb-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: rgba(180,210,230,0.4); transition: color 0.18s; flex-shrink: 0; }
+        .sb-item-label { flex: 1; }
+        .sb-item-badge { font-family: 'Orbitron', monospace; font-size: 7px; padding: 2px 7px; border-radius: 2px; letter-spacing: 1px; font-weight: 700; }
+        .badge-gold { background: rgba(198,168,94,0.15); color: var(--gold); border: 1px solid rgba(198,168,94,0.3); }
+        .badge-cyan { background: rgba(78,202,255,0.1); color: var(--cyan); border: 1px solid rgba(78,202,255,0.25); }
+        .badge-new  { background: rgba(0,245,160,0.1); color: #00F5A0; border: 1px solid rgba(0,245,160,0.3); }
+        .sb-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(78,202,255,0.1), transparent); margin: 4px 20px; flex-shrink: 0; }
+        .sb-logout { margin: 12px 20px 24px; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid rgba(255,64,96,0.25); border-radius: 6px; cursor: pointer; color: #FF4060; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s; flex-shrink: 0; }
+        .sb-logout:hover { background: rgba(255,64,96,0.08); border-color: rgba(255,64,96,0.45); }
+        .sb-logout-icon { font-size: 14px; }
+        #sidebarCloseBtn {
+            position: absolute; top: 14px; left: 14px;
+            width: 32px; height: 32px;
+            background: rgba(255,64,96,0.08); border: 1px solid rgba(255,64,96,0.25);
+            border-radius: 6px; color: #FF4060; font-size: 16px; line-height: 1;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; z-index: 10; font-family: sans-serif;
+        }
+        #sidebarCloseBtn:hover { background: rgba(255,64,96,0.18); }
+
+        /* ── HOVER TOOLTIP ── */
+        #hover-tooltip {
+            position: fixed; pointer-events: none; opacity: 0;
+            transition: opacity 0.18s ease; z-index: 1001;
+            white-space: nowrap; transform: translate(-50%, -100%); margin-top: -12px;
+        }
+        #hover-tooltip.show { opacity: 1; }
+        /* pinned = clicked mode: brighter border, gold accent */
+        #hover-tooltip.pinned .tt-inner {
+            border-color: rgba(198,168,94,0.5);
+            box-shadow: 0 0 0 1px rgba(198,168,94,0.1), 0 6px 28px rgba(0,0,0,0.6), 0 0 24px rgba(198,168,94,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        #hover-tooltip.pinned .tt-label { color: rgba(198,168,94,0.7); }
+        #hover-tooltip.pinned .tt-inner::before { background: linear-gradient(90deg, transparent, rgba(198,168,94,0.7), transparent); }
+        #hover-tooltip.pinned .tt-arrow { border-top-color: rgba(198,168,94,0.5); }
+        .tt-inner {
+            background: linear-gradient(135deg, rgba(4,12,28,0.96) 0%, rgba(8,20,42,0.92) 100%);
+            backdrop-filter: blur(16px) saturate(1.8); -webkit-backdrop-filter: blur(16px) saturate(1.8);
+            border: 1px solid rgba(100,185,255,0.30); border-radius: 6px; padding: 9px 16px 10px;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(100,185,255,0.07), 0 6px 28px rgba(0,0,0,0.6), 0 0 24px rgba(80,160,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .tt-inner::before {
+            content: ''; position: absolute; top: 0; left: 12px; right: 12px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100,210,255,0.7), transparent);
+        }
+        .tt-arrow {
+            display: block; width: 0; height: 0;
+            border-left: 8px solid transparent; border-right: 8px solid transparent;
+            border-top: 8px solid rgba(100,185,255,0.30); margin: 0 auto; position: relative;
+        }
+        .tt-arrow::after {
+            content: ''; position: absolute; top: -9px; left: -7px;
+            border-left: 7px solid transparent; border-right: 7px solid transparent;
+            border-top: 7px solid rgba(4,12,28,0.95);
+        }
+        .tt-label {
+            font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 2.5px;
+            color: rgba(100,210,255,0.55); text-transform: uppercase; margin-bottom: 4px;
+        }
+        .tt-name {
+            font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
+            color: #dff0ff; letter-spacing: 0.8px; text-shadow: 0 0 14px rgba(100,210,255,0.38);
+        }
+        /* blink animation for pinned tooltip */
+        @keyframes ttBlink { 0%,100%{opacity:1} 50%{opacity:0.55} }
+        #hover-tooltip.pinned { animation: ttBlink 1.2s ease-in-out infinite; }
+
+        /* ── SPACE TOOLTIP ── */
+        #space-tooltip { position: fixed; pointer-events: none; z-index: 1002; opacity: 0; transition: opacity 0.2s; transform: translate(-50%, -100%); white-space: nowrap; }
+        #space-tooltip.show { opacity: 1; }
+        .stt-inner { background: linear-gradient(135deg, rgba(2,8,20,0.97) 0%, rgba(4,14,32,0.95) 100%); backdrop-filter: blur(18px) saturate(2); -webkit-backdrop-filter: blur(18px) saturate(2); border: 1px solid rgba(255,200,80,0.3); border-radius: 6px; padding: 10px 16px 11px; min-width: 160px; position: relative; box-shadow: 0 0 0 1px rgba(255,200,80,0.07), 0 8px 32px rgba(0,0,0,0.7), 0 0 30px rgba(255,180,40,0.1); }
+        .stt-inner::before { content: ''; position: absolute; top: 0; left: 10px; right: 10px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,200,80,0.6), transparent); }
+        .stt-type { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 2.5px; color: rgba(255,200,80,0.6); text-transform: uppercase; margin-bottom: 3px; }
+        .stt-name { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; color: #fff8e8; letter-spacing: 0.8px; margin-bottom: 6px; }
+        .stt-dist-row { display: flex; align-items: center; gap: 7px; }
+        .stt-dist-label { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); }
+        .stt-dist-val { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: #FFD060; transition: color 0.15s; min-width: 70px; }
+        .stt-dist-val.increasing { color: #FF8060; }
+        .stt-dist-val.decreasing { color: #60FFB0; }
+        .stt-arrow { display: block; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid rgba(255,200,80,0.3); margin: 0 auto; position: relative; }
+        .stt-arrow::after { content: ''; position: absolute; top: -8px; left: -6px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid rgba(2,8,20,0.97); }
+
+        /* ── CITY LABEL ── */
+        #city-label {
+            position: fixed; transform: translate(-50%, -100%) scale(0.92);
+            margin-top: -15px; pointer-events: none; opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease; z-index: 1000;
+            background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(198,168,94,0.11) 50%, rgba(255,255,255,0.04) 100%);
+            backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            border: 1px solid rgba(198,168,94,0.4); border-radius: 4px; min-width: 280px; overflow: visible;
+            box-shadow: 0 0 0 1px rgba(198,168,94,0.12), 0 8px 40px rgba(0,0,0,0.6), 0 0 50px rgba(198,168,94,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        #city-label.show { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+        #city-label::before { content: ''; display: block; height: 2px; background: linear-gradient(90deg, transparent 0%, #C6A85E 30%, #fff8e1 50%, #C6A85E 70%, transparent 100%); background-size: 200% 100%; animation: hudScan 2.5s linear infinite; }
+        #city-label::after { content: ''; position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-bottom: 2px solid rgba(198,168,94,0.55); border-right: 2px solid rgba(198,168,94,0.55); }
+        .hud-arrow { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid rgba(198,168,94,0.4); }
+        .hud-arrow::after { content: ''; position: absolute; top: -10px; left: -7px; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid rgba(20,18,10,0.9); }
+        @keyframes hudScan { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes hudDotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.25;transform:scale(0.55)} }
+        .hud-label-inner  { padding: 16px 26px 20px; position: relative; }
+        .hud-label-tag    { font-family: 'Orbitron', monospace; font-size: 8.5px; font-weight: 400; letter-spacing: 3px; color: rgba(198,168,94,0.65); text-transform: uppercase; margin-bottom: 7px; }
+        .hud-label-name   { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-shadow: 0 0 22px rgba(198,168,94,0.55); }
+        .hud-label-footer { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-family: 'Orbitron', monospace; font-size: 7.5px; letter-spacing: 2px; color: rgba(255,255,255,0.28); }
+        .hud-dot          { width: 5px; height: 5px; border-radius: 50%; background: #C6A85E; flex-shrink: 0; animation: hudDotPulse 1.3s ease-in-out infinite; }
+
+        /* ── ADAPTIVE GRAPHICS TOAST ── */
+        #adaptive-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 2000; pointer-events: none; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; white-space: nowrap; }
+        #adaptive-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #adaptive-toast.hide { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        .toast-inner { display: flex; align-items: center; gap: 10px; padding: 11px 20px; background: rgba(4, 12, 28, 0.82); backdrop-filter: blur(18px) saturate(1.8); -webkit-backdrop-filter: blur(18px) saturate(1.8); border-radius: 6px; border: 1px solid rgba(198,168,94,0.35); box-shadow: 0 0 0 1px rgba(198,168,94,0.08), 0 8px 32px rgba(0,0,0,0.6), 0 0 30px rgba(198,168,94,0.12), inset 0 1px 0 rgba(255,255,255,0.05); }
+        .toast-inner::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); flex-shrink: 0; animation: toastDot 1.2s ease-in-out infinite; }
+        @keyframes toastDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+        .toast-label { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; color: var(--gold); font-weight: 700; text-transform: uppercase; }
+        .toast-sub { font-family: 'Space Mono', monospace; font-size: 8px; color: rgba(180,210,230,0.45); letter-spacing: 0.5px; }
+
+        /* ── GRAPHICS MODE BADGE ── */
+        #gfx-badge { position: fixed; bottom: 28px; left: 20px; z-index: 500; pointer-events: none; opacity: 0; transition: opacity 0.5s; }
+        #gfx-badge.show { opacity: 1; }
+        .gfx-badge-inner { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 2px; color: rgba(180,210,230,0.3); border: 1px solid rgba(180,210,230,0.1); border-radius: 3px; padding: 4px 10px; background: rgba(4,10,22,0.5); backdrop-filter: blur(8px); }
+        .gfx-badge-inner.low { color: rgba(198,168,94,0.5); border-color: rgba(198,168,94,0.2); }
+
+        /* ── LOADING ── */
+        #loading { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--gold); z-index: 2000; transition: opacity 0.6s ease; }
+        #loading .ld-title { font-family: 'Orbitron', monospace; font-size: 13px; letter-spacing: 4px; color: var(--gold); }
+        #loading .ld-ring { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(198,168,94,0.2); border-top-color: var(--gold); animation: spin .9s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        #loading.hidden { opacity: 0; pointer-events: none; }
+
+        /* ── INSTRUCTIONS ── */
+        #instructions { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.45); font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-align: center; z-index: 100; pointer-events: none; }
+        #instructions div { margin: 3px 0; }
+
+        /* ── SCROLLBARS ── */
+        .sidebar-inner::-webkit-scrollbar { width: 4px; }
+        .sidebar-inner::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(78,202,255,0.2); border-radius: 4px; }
+        #search-results::-webkit-scrollbar { width: 4px; }
+        #search-results::-webkit-scrollbar-track { background: transparent; }
+        #search-results::-webkit-scrollbar-thumb { background: rgba(198,168,94,0.3); border-radius: 4px; }
+
+        @media (max-width: 640px) {
+            #sidebar { width: 100%; }
+            #sidebar .sidebar-inner { position: relative; }
+            #sidebarCloseBtn { display: flex !important; }
+            .user-name { display: none; }
+            #search-container { max-width: none; margin: 0 12px; }
+            .topbar-title { display: none; }
+        }
+        @media (min-width: 641px) {
+            #sidebarCloseBtn { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div class="ld-ring"></div>
+        <div class="ld-title">LOADING UNIVERSE</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <header id="topbar">
+        <div class="topbar-left">
+            <img src="assets/images/logo.png" alt="Logo" class="topbar-logo">
+            <span class="topbar-title">Billion Dollar Universe</span>
+        </div>
+        <div id="search-container">
+            <input type="text" id="search-bar" placeholder="🔍 Search cities…" autocomplete="off">
+            <div id="search-results"></div>
+        </div>
+        <div class="topbar-right">
+            <div class="user-chip">
+                <img src="" alt="" class="user-avatar" id="topUserAvatar">
+                <span class="user-name" id="topUsername">@—</span>
+            </div>
+            <div id="menu-btn" title="Menu">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <aside id="sidebar">
+        <div class="sidebar-inner" id="sidebarInner">
+            <button id="sidebarCloseBtn" onclick="closeSidebar()" aria-label="Close menu">✕</button>
+        </div>
+    </aside>
+
+    <div id="city-label"></div>
+
+    <div id="hover-tooltip">
+        <div class="tt-inner">
+            <div class="tt-label" id="tt-label-text">// node</div>
+            <div class="tt-name" id="tt-name-text">City</div>
+        </div>
+        <span class="tt-arrow"></span>
+    </div>
+
+    <div id="space-tooltip"></div>
+
+    <div id="adaptive-toast">
+        <div class="toast-inner">
+            <div>
+                <div class="toast-label" id="toast-label">Switching to Low Graphics Mode</div>
+                <div class="toast-sub" id="toast-sub">Optimizing for your device…</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gfx-badge"><div class="gfx-badge-inner" id="gfx-badge-text">GRAPHICS: MOBILE</div></div>
+
+    <div id="instructions">
+        <div id="instruction-text"></div>
+    </div>
+
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="scripts/firebase-config.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+    'use strict';
+
+    const ADMIN_EMAIL = 'johnrufai242@gmail.com';
+
+    const ROLES = Object.freeze({ USER: 'user', BRAND: 'brand', ADMIN: 'admin' });
+
+    const CAPABILITIES = Object.freeze({
+        EXPLORE_UNIVERSE:     ['user','brand','admin'],
+        BUY_SLOT:             ['user','brand','admin'],
+        TRADE_SLOT:           ['user','brand','admin'],
+        EARN_CREDITS:         ['user','admin'],
+        WATCH_ADS:            ['user','admin'],
+        SPEND_CREDITS:        ['user','brand','admin'],
+        UPLOAD_AD:            ['brand','admin'],
+        SCHEDULE_AD:          ['brand','admin'],
+        VIEW_OWN_ANALYTICS:   ['brand','admin'],
+        MANAGE_BRAND_PROFILE: ['brand','admin'],
+        BUY_BOOST:            ['brand','admin'],
+        VIEW_ALL_ANALYTICS:   ['admin'],
+        OVERRIDE_OWNERSHIP:   ['admin'],
+        MANAGE_USERS:         ['admin'],
+        WRITE_LEADERBOARD:    ['admin'],
+    });
+
+    const SIDEBAR_SECTIONS = {
+        user: [
+            { label: '// Navigate', items: [
+                { id: 'nav-universe',    icon: '◎', label: 'Universe',        badge: { text: 'LIVE', cls: 'badge-cyan' }, action: 'nav:brand-universe.html' },
+                { id: 'nav-explorer',   icon: '⊞', label: 'Brand Explorer',                                              action: 'nav:user-dashboard.html' },
+                { id: 'nav-slots',      icon: '▦', label: 'My Slots',                                                    action: 'nav:user-slots.html',    cap: 'BUY_SLOT' },
+                { id: 'nav-marketplace',icon: '◈', label: 'Marketplace',                                                  action: 'nav:marketplace.html',   cap: 'TRADE_SLOT' },
+            ]},
+            { label: '// Rewards', items: [
+                { id: 'nav-credits', icon: '⚡', label: 'My Credits',  badge: { text: 'EARN', cls: 'badge-new' }, action: 'nav:user-credits.html', cap: 'EARN_CREDITS' },
+                { id: 'nav-watch',   icon: '▶', label: 'Watch & Earn',                                           action: 'nav:watch-ads.html',    cap: 'WATCH_ADS' },
+            ]},
+            { label: '// Account', items: [
+                { id: 'sb-edit',    icon: '✎', label: 'Edit Profile',                                                  action: 'fn:editProfile' },
+                { id: 'sb-upgrade', icon: '⬆', label: 'Upgrade to Brand', badge: { text: 'PRO', cls: 'badge-gold' }, action: 'fn:upgradeToBrand' },
+                { id: 'sb-notif',   icon: '🔔', label: 'Notifications',                                               action: 'fn:notifications' },
+                { id: 'sb-privacy', icon: '⊙', label: 'Privacy',                                                     action: 'fn:privacy' },
+                { id: 'sb-help',    icon: '?',  label: 'Help & Support',                                              action: 'fn:help' },
+            ]},
+        ],
+        brand: [
+            { label: '// Navigate', items: [
+                { id: 'nav-universe',  icon: '◎', label: 'Universe',       badge: { text: 'LIVE', cls: 'badge-cyan' }, action: 'nav:brand-universe.html' },
+                { id: 'nav-dashboard', icon: '⌂', label: 'Dashboard',                                                   action: 'nav:brand-dashboard.html' },
+                { id: 'nav-explorer',  icon: '⊞', label: 'Brand Explorer',                                              action: 'nav:user-dashboard.html' },
+            ]},
+            { label: '// My Assets', items: [
+                { id: 'nav-slots',       icon: '▦',  label: 'My Slots',         action: 'nav:brand-slots.html',     cap: 'BUY_SLOT' },
+                { id: 'nav-marketplace', icon: '◈',  label: 'Marketplace',      action: 'nav:marketplace.html',     cap: 'TRADE_SLOT' },
+                { id: 'nav-boost',       icon: '🚀', label: 'Boost Visibility', badge: { text: 'NEW', cls: 'badge-new' }, action: 'fn:buyBoost', cap: 'BUY_BOOST' },
+            ]},
+            { label: '// Creator Tools', items: [
+                { id: 'nav-ads',       icon: '▶',  label: 'Upload Ad',    action: 'nav:brand-ads.html',       cap: 'UPLOAD_AD' },
+                { id: 'nav-schedule',  icon: '📅', label: 'Schedule Ads', action: 'nav:brand-schedule.html',  cap: 'SCHEDULE_AD' },
+                { id: 'nav-analytics', icon: '📊', label: 'Analytics',    action: 'nav:brand-analytics.html', cap: 'VIEW_OWN_ANALYTICS' },
+            ]},
+            { label: '// Account', items: [
+                { id: 'sb-edit',    icon: '✎', label: 'Edit Profile',                                                            action: 'fn:editProfile' },
+                { id: 'sb-pic',     icon: '⬡', label: 'Change Picture',                                                         action: 'fn:changePicture' },
+                { id: 'sb-verify',  icon: '◈', label: 'Verification', badge: { text: '₦5K', cls: 'badge-gold' },               action: 'fn:applyVerify', cap: 'MANAGE_BRAND_PROFILE' },
+                { id: 'sb-notif',   icon: '🔔', label: 'Notifications',                                                         action: 'fn:notifications' },
+                { id: 'sb-privacy', icon: '⊙', label: 'Privacy',                                                               action: 'fn:privacy' },
+                { id: 'sb-help',    icon: '?',  label: 'Help & Support',                                                        action: 'fn:help' },
+            ]},
+            { label: '// Theme', items: [
+                { id: 'sb-theme', icon: '◆', label: 'Node Colour', badge: { text: 'CUSTOM', cls: 'badge-cyan' }, action: 'fn:nodeColour' },
+            ]},
+        ],
+        admin: [
+            { label: '// Navigate', items: [
+                { id: 'nav-universe',  icon: '◎', label: 'Universe',       badge: { text: 'LIVE', cls: 'badge-cyan' }, action: 'nav:brand-universe.html' },
+                { id: 'nav-dashboard', icon: '⌂', label: 'Admin Panel',                                                 action: 'nav:admin-home.html' },
+                { id: 'nav-explorer',  icon: '⊞', label: 'Brand Explorer',                                              action: 'nav:user-dashboard.html' },
+            ]},
+            { label: '// Administration', items: [
+                { id: 'admin-users',       icon: '👥', label: 'Manage Users',    action: 'nav:admin-users.html',       cap: 'MANAGE_USERS' },
+                { id: 'admin-brands',      icon: '🏷', label: 'Manage Brands',   action: 'nav:admin-brands.html',      cap: 'OVERRIDE_OWNERSHIP' },
+                { id: 'admin-slots',       icon: '▦',  label: 'All Slots',       action: 'nav:admin-slots.html',       cap: 'OVERRIDE_OWNERSHIP' },
+                { id: 'admin-analytics',   icon: '📊', label: 'All Analytics',   action: 'nav:admin-analytics.html',   cap: 'VIEW_ALL_ANALYTICS' },
+                { id: 'admin-leaderboard', icon: '⬡',  label: 'Leaderboard Mgr', action: 'nav:admin-leaderboard.html', cap: 'WRITE_LEADERBOARD' },
+            ]},
+            { label: '// Moderation', items: [
+                { id: 'admin-ads',     icon: '▶', label: 'Review Ads', action: 'nav:admin-ads.html' },
+                { id: 'admin-reports', icon: '⚑', label: 'Reports',    action: 'nav:admin-reports.html' },
+            ]},
+            { label: '// Account', items: [
+                { id: 'sb-edit', icon: '✎', label: 'Edit Profile', action: 'fn:editProfile' },
+            ]},
+        ],
+    };
+
+    let _session = null;
+
+    function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;'); }
+
+    function hasCapability(cap) {
+        if (!_session) return false;
+        return (CAPABILITIES[cap] || []).includes(_session.role);
+    }
+
+    async function detectRole(firebaseUser, db) {
+        const uid = firebaseUser.uid;
+        let role = 'user', brandId = null, displayName = '', photoURL = '', handle = '', activationStatus = 'inactive';
+        try {
+            const uSnap = await db.collection('users').doc(uid).get();
+            if (uSnap.exists) {
+                const d = uSnap.data();
+                if (['user','brand','admin'].includes(d.role)) role = d.role;
+                brandId     = d.brandId || null;
+                displayName = d.username || d.displayName || '';
+                photoURL    = d.photoURL || '';
+                handle      = '@' + (d.username || '');
+            }
+            if (role === 'brand') {
+                const targetId = brandId || uid;
+                const bSnap = await db.collection('brands').doc(targetId).get();
+                if (bSnap.exists) {
+                    const bd = bSnap.data();
+                    displayName      = bd.brandName || displayName;
+                    photoURL         = bd.photoURL  || photoURL;
+                    handle           = '@' + (bd.username || handle.slice(1));
+                    activationStatus = bd.activationStatus || 'inactive';
+                    brandId          = targetId;
+                }
+            }
+        } catch (e) {
+            console.warn('[RBAC] Firestore read failed, using auth defaults:', e);
+        }
+        if (firebaseUser.email === ADMIN_EMAIL) {
+            role             = 'admin';
+            activationStatus = 'active';
+            if (!displayName) displayName = firebaseUser.displayName || 'Admin';
+            if (!photoURL)    photoURL    = firebaseUser.photoURL    || '';
+            if (!handle || handle === '@') handle = '@admin';
+        }
+        _session = { uid, role, brandId, displayName, photoURL, handle, activationStatus, email: firebaseUser.email || '' };
+        console.log('[RBAC] Role resolved:', role);
+        return _session;
+    }
+
+    function renderSidebar(containerEl, handlers = {}) {
+        if (!_session) return;
+        const { role, displayName, handle, photoURL, activationStatus } = _session;
+        const sections = SIDEBAR_SECTIONS[role];
+        if (!sections) return;
+        const hdr = document.createElement('div');
+        hdr.className = 'sb-header';
+        hdr.innerHTML = `
+            <div class="sb-profile">
+                <img src="${_esc(photoURL||'')}" alt="" class="sb-avatar" id="sbAvatar" onerror="this.src='assets/images/avatar-placeholder.png'">
+                <div>
+                    <div class="sb-name">${_esc(displayName||'USER')}</div>
+                    <div class="sb-handle">${_esc(handle||'')}</div>
+                    <div class="sb-role-chip sb-role-${_esc(role)}">${_esc(role.toUpperCase())}</div>
+                </div>
+            </div>
+            <span class="sb-status ${activationStatus==='active'?'active':'inactive'}">
+                <span class="sb-status-dot"></span> ${activationStatus==='active'?'ACTIVE':'INACTIVE'}
+            </span>`;
+        const wrap = document.createElement('div');
+        wrap.className = 'sb-sections';
+        sections.forEach(section => {
+            const visible = section.items.filter(item => !item.cap || hasCapability(item.cap));
+            if (!visible.length) return;
+            const sec = document.createElement('div');
+            sec.className = 'sb-section';
+            sec.innerHTML = `<div class="sb-section-label">${_esc(section.label)}</div>`;
+            visible.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'sb-item'; el.id = item.id; el.tabIndex = 0;
+                el.innerHTML = `<span class="sb-item-icon">${_esc(item.icon)}</span><span class="sb-item-label">${_esc(item.label)}</span>${item.badge?`<span class="sb-item-badge ${_esc(item.badge.cls)}">${_esc(item.badge.text)}</span>`:''}`;
+                const [type, val] = item.action.split(':');
+                if (type === 'nav') el.addEventListener('click', () => window.location.href = val);
+                else if (type === 'fn') el.addEventListener('click', () => { const h = handlers[val]; h ? h(_session) : console.warn('[RBAC] No handler:', val); });
+                el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click();} });
+                sec.appendChild(el);
+            });
+            wrap.appendChild(sec);
+            const div = document.createElement('div'); div.className = 'sb-divider'; wrap.appendChild(div);
+        });
+        const logout = document.createElement('div');
+        logout.className = 'sb-logout';
+        logout.innerHTML = `<span class="sb-logout-icon">⏻</span>LOGOUT`;
+        logout.addEventListener('click', async () => { await firebase.auth().signOut(); window.location.href = 'index.html'; });
+        containerEl.innerHTML = '';
+        const closeBtn = document.createElement('button');
+        closeBtn.id = 'sidebarCloseBtn'; closeBtn.onclick = closeSidebar; closeBtn.innerHTML = '✕'; closeBtn.setAttribute('aria-label','Close menu');
+        containerEl.appendChild(closeBtn);
+        containerEl.appendChild(hdr);
+        containerEl.appendChild(wrap);
+        containerEl.appendChild(logout);
+    }
+
+    /* ═══════════════════════════════════════════
+       SIDEBAR OPEN / CLOSE
+    ═══════════════════════════════════════════ */
+    const menuBtn  = document.getElementById('menu-btn');
+    const sidebar  = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    function openSidebar()  { sidebar.classList.add('open'); backdrop.classList.add('show'); menuBtn.classList.add('open'); }
+    function closeSidebar() { sidebar.classList.remove('open'); backdrop.classList.remove('show'); menuBtn.classList.remove('open'); }
+    menuBtn.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+    backdrop.addEventListener('click', closeSidebar);
+
+    const SIDEBAR_HANDLERS = {
+        editProfile:    () => { closeSidebar(); alert('Edit profile — coming soon'); },
+        changePicture:  () => { closeSidebar(); alert('Change picture — coming soon'); },
+        applyVerify:    () => { closeSidebar(); alert('Verification — coming soon'); },
+        buyBoost:       () => { closeSidebar(); alert('Boost — coming soon'); },
+        upgradeToBrand: () => { closeSidebar(); window.location.href = 'register-brand.html'; },
+        nodeColour:     () => { closeSidebar(); alert('Node colour — coming soon'); },
+        notifications:  () => { closeSidebar(); alert('Notifications — coming soon'); },
+        privacy:        () => { closeSidebar(); alert('Privacy — coming soon'); },
+        help:           () => { closeSidebar(); alert('Help & Support — coming soon'); },
+    };
+
+    /* ═══════════════════════════════════════════
+       DEVICE / PERFORMANCE TIERS
+    ═══════════════════════════════════════════ */
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const isPC = !isMobile;
+
+    const TIER = {
+        pc:     { earthSegments:64, starCount:5000, maxConnections:190, curveSegments:20, antialias:true,  pixelRatio:Math.min(window.devicePixelRatio,2), autoRotateSpeed:0.0005, nodeRotSpeed:0.01,  shootSparks:80, trailPts:180, trailHistLen:120, meteorTrailPts:60, enableFlares:true,  starSize:0.5, webOpacity:0.12, enableWireframe:true,  wireframeSegments:32 },
+        mobile: { earthSegments:32, starCount:1500, maxConnections:30,  curveSegments:8,  antialias:false, pixelRatio:1,                                   autoRotateSpeed:0.0003, nodeRotSpeed:0.005, shootSparks:40, trailPts:90,  trailHistLen:60,  meteorTrailPts:30, enableFlares:true,  starSize:0.7, webOpacity:0.15, enableWireframe:true,  wireframeSegments:24 },
+        low:    { earthSegments:24, starCount:600,  maxConnections:12,  curveSegments:4,  antialias:false, pixelRatio:Math.min(window.devicePixelRatio*0.6,0.75), autoRotateSpeed:0.0002, nodeRotSpeed:0.003, shootSparks:12, trailPts:30, trailHistLen:24, meteorTrailPts:14, enableFlares:false, starSize:0.9, webOpacity:0.0,  enableWireframe:false, wireframeSegments:16 },
+    };
+
+    let activeTierName = isPC ? 'pc' : 'mobile';
+    let perf = { ...TIER[activeTierName] };
+    let graphicsLocked = false;
+
+    const FPS_TARGET=60, FPS_LOW_THRESH=FPS_TARGET*0.75, FPS_OK_THRESH=FPS_TARGET*0.80, FPS_SAMPLE_SIZE=90;
+    let fpsSamples=[], fpsLastTime=0, fpsEvalDoneEarly=false, fpsEvalDoneLate=false, sceneStartTime=0;
+    const FPS_WARMUP=5000, FPS_EARLY_WIN=[20000,25000], FPS_LATE_WIN=[25000,30000];
+
+    function recordFPS(now){if(fpsLastTime===0){fpsLastTime=now;return;}const dt=now-fpsLastTime;fpsLastTime=now;if(dt<=0)return;fpsSamples.push(1000/dt);if(fpsSamples.length>FPS_SAMPLE_SIZE)fpsSamples.shift();}
+    function rollingAvgFPS(){if(!fpsSamples.length)return FPS_TARGET;return fpsSamples.reduce((a,b)=>a+b,0)/fpsSamples.length;}
+    function checkAdaptivePerformance(now){if(graphicsLocked||isPC)return;const elapsed=now-sceneStartTime;if(elapsed<FPS_WARMUP)return;const avg=rollingAvgFPS();if(!fpsEvalDoneEarly&&elapsed>=FPS_EARLY_WIN[0]&&elapsed<=FPS_EARLY_WIN[1]){if(avg>=FPS_OK_THRESH){fpsEvalDoneEarly=true;graphicsLocked=true;showGfxBadge('GRAPHICS: MOBILE',false);}}if(!fpsEvalDoneLate&&elapsed>=FPS_LATE_WIN[0]&&elapsed<=FPS_LATE_WIN[1]){fpsEvalDoneLate=true;if(avg<FPS_LOW_THRESH){applyLowGraphics();}else{graphicsLocked=true;showGfxBadge('GRAPHICS: MOBILE',false);}}}
+    function showToast(label,sub,duration=4000){const t=document.getElementById('adaptive-toast');document.getElementById('toast-label').textContent=label;document.getElementById('toast-sub').textContent=sub;t.classList.remove('hide');t.classList.add('show');setTimeout(()=>{t.classList.remove('show');t.classList.add('hide');},duration);}
+    function showGfxBadge(text,isLow){const b=document.getElementById('gfx-badge'),i=document.getElementById('gfx-badge-text');i.textContent=text;i.className='gfx-badge-inner'+(isLow?' low':'');b.classList.add('show');}
+
+    function applyLowGraphics(){graphicsLocked=true;activeTierName='low';const lp=TIER.low;renderer.setPixelRatio(lp.pixelRatio);if(webLines){webLines.material.opacity=0;webLines.visible=false;}if(starMesh){starMesh.material.opacity=0.5;starMesh.material.size=lp.starSize;const geo=starMesh.geometry,pos=geo.attributes.position.array;for(let i=0;i<pos.length;i+=3){if(Math.random()>0.25){pos[i]=50000;pos[i+1]=50000;pos[i+2]=50000;}}geo.attributes.position.needsUpdate=true;}solarFlares.forEach(f=>{f.visible=false;});cityNodes.forEach(n=>{if(n.userData.light){n.userData.light.intensity=0.6;n.userData.light.distance=8;}});shootingStars.forEach(s=>{scene.remove(s.head,s.trailPoints,s.sparks);});shootingStars=[];meteorites.forEach(m=>{scene.remove(m.mesh,m.trail,m.proxy);});meteorites=[];nextShootTime=Date.now()+45000;nextMeteoTime=Date.now()+30000;perf={...lp};showToast('LOW GRAPHICS MODE ACTIVE','Optimized for your device performance');showGfxBadge('GRAPHICS: LOW',true);}
+
+    /* ── DATA ── */
+    let cities = [];
+    async function loadCities() {
+        const db = firebase.firestore();
+        const snap = await db.collection('cities').get();
+        cities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        console.log('Loaded cities:', cities.length);
+    }
+
+    /* ── SCENE GLOBALS ── */
+    let scene, camera, renderer, controls, raycaster, mouse;
+    let earthMesh, cloudMesh, starMesh, webLines, atmosphereGlowMesh, wireframeMesh;
+    let cityNodes = [];
+    let selectedNode = null, clickedNode = null;
+    let isAnimatingCamera = false, isInitialized = false;
+    let targetRotX = 0.005, targetRotY = 0.002;
+    let isDragging = false, mouseXDown = 0, mouseYDown = 0;
+    const SLOW = 0.98, DRAG = 0.0002;
+    let shootingStars = [], meteorites = [], nextShootTime = 0, nextMeteoTime = 0;
+    let sunMesh3d = null;
+    let SUN_POS;
+    let solarFlares = [];
+
+    function initScene(){scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,1000);camera.position.set(12,-8,20);camera.lookAt(0,0,0);renderer=new THREE.WebGLRenderer({antialias:perf.antialias,alpha:true,powerPreference:isPC?'high-performance':'low-power'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(perf.pixelRatio);document.getElementById('canvas-container').appendChild(renderer.domElement);raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.05;controls.enableZoom=true;controls.enablePan=false;controls.minDistance=12;controls.maxDistance=60;controls.autoRotate=false;scene.add(new THREE.AmbientLight(0x111133,0.4));const sunLight=new THREE.DirectionalLight(0xFFF5E0,1.8);sunLight.position.copy(SUN_POS);scene.add(sunLight,sunLight.target);const fill=new THREE.DirectionalLight(0x1a2a4a,0.35);fill.position.set(-200,-40,-120);scene.add(fill);sunMesh3d=new THREE.Mesh(new THREE.SphereGeometry(10,32,32),new THREE.MeshBasicMaterial({color:0xFFF5C0}));sunMesh3d.position.copy(SUN_POS);sunMesh3d.userData={isSun:true};scene.add(sunMesh3d);[[28,0.22,0xFFEE88],[50,0.09,0xFFCC44],[90,0.035,0xFF9900],[160,0.015,0xFF6600]].forEach(([r,op,col])=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,16),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,side:THREE.BackSide,depthWrite:false}));m.position.copy(SUN_POS);scene.add(m);});if(perf.enableFlares){for(let f=0;f<6;f++){const flareMat=new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(0.08+Math.random()*0.04,1,0.6),transparent:true,opacity:0,depthWrite:false});const flareGeo=new THREE.TorusGeometry(12+Math.random()*8,0.8+Math.random()*0.8,4,12,Math.PI*(0.3+Math.random()*0.5));const flare=new THREE.Mesh(flareGeo,flareMat);flare.position.copy(SUN_POS);flare.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);flare.userData={phase:Math.random()*Math.PI*2,speed:0.4+Math.random()*0.6};scene.add(flare);solarFlares.push(flare);}}}
+
+    function createEarth(){const R=10;earthMesh=new THREE.Mesh(new THREE.SphereGeometry(R,perf.earthSegments,perf.earthSegments),new THREE.MeshPhongMaterial({map:new THREE.TextureLoader().load('texture/earthmap.jpeg'),bumpMap:new THREE.TextureLoader().load('texture/earthbump.jpeg'),bumpScale:0.3}));scene.add(earthMesh);cloudMesh=new THREE.Mesh(new THREE.SphereGeometry(R+0.15,perf.earthSegments,perf.earthSegments),new THREE.MeshPhongMaterial({map:new THREE.TextureLoader().load('texture/earthCloud.png'),transparent:true,opacity:0.8}));scene.add(cloudMesh);atmosphereGlowMesh=new THREE.Mesh(new THREE.SphereGeometry(R+0.5,perf.earthSegments,perf.earthSegments),new THREE.ShaderMaterial({vertexShader:`varying vec3 vNormal;void main(){vNormal=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,fragmentShader:`varying vec3 vNormal;void main(){float intensity=pow(0.7-dot(vNormal,vec3(0,0,1)),2.0);gl_FragColor=vec4(0.53,0.81,0.92,1.0)*intensity;}`,blending:THREE.AdditiveBlending,side:THREE.BackSide,transparent:true}));earthMesh.add(atmosphereGlowMesh);if(perf.enableWireframe){wireframeMesh=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(R+0.05,perf.wireframeSegments,perf.wireframeSegments)),new THREE.LineBasicMaterial({color:0x87CEEB,transparent:true,opacity:0.25}));earthMesh.add(wireframeMesh);}return R;}
+
+    function createStarfield(){const cnt=perf.starCount,pos=new Float32Array(cnt*3);for(let i=0;i<cnt*3;i+=3){const r=100+Math.random()*200,t=Math.random()*Math.PI*2,p=Math.acos(Math.random()*2-1);pos[i]=r*Math.sin(p)*Math.cos(t);pos[i+1]=r*Math.sin(p)*Math.sin(t);pos[i+2]=r*Math.cos(p);}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));starMesh=new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:perf.starSize,transparent:true,opacity:0.8}));scene.add(starMesh);}
+
+    let spaceHovered=null;
+    function showSpaceTooltip(sx,sy,type,label,distUnits,distTrend){const tip=document.getElementById('space-tooltip');const trendClass=distTrend>0?'increasing':distTrend<0?'decreasing':'';tip.innerHTML=`<div class="stt-inner"><div class="stt-type">// ${type}</div><div class="stt-name">${label}</div><div class="stt-dist-row"><span class="stt-dist-label">DIST</span><span class="stt-dist-val ${trendClass}">${distUnits}</span></div></div><span class="stt-arrow"></span>`;tip.style.left=sx+'px';tip.style.top=(sy-14)+'px';tip.classList.add('show');}
+    function hideSpaceTooltip(){document.getElementById('space-tooltip').classList.remove('show');spaceHovered=null;}
+    function getDistLabel(worldPos){const d=camera.position.distanceTo(worldPos);return Number((d*1000).toFixed(0)).toLocaleString()+' km';}
+
+    function spawnShootingStar(){const theta=Math.random()*Math.PI*2,phi=Math.acos(Math.random()*2-1),dist=190+Math.random()*50;const start=new THREE.Vector3(dist*Math.sin(phi)*Math.cos(theta),dist*Math.sin(phi)*Math.sin(theta),dist*Math.cos(phi));const sweepOffset=new THREE.Vector3((Math.random()-0.5)*1.2,(Math.random()-0.5)*1.2,(Math.random()-0.5)*1.2);const dir=new THREE.Vector3(-start.x,-start.y,-start.z).normalize().add(sweepOffset).normalize();const headMat=new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0,depthWrite:false});const head=new THREE.Mesh(new THREE.SphereGeometry(0.45,10,10),headMat);head.position.copy(start);scene.add(head);const innerHalo=new THREE.Mesh(new THREE.SphereGeometry(1.1,10,10),new THREE.MeshBasicMaterial({color:0xDDEEFF,transparent:true,opacity:0,side:THREE.BackSide,depthWrite:false}));head.add(innerHalo);const outerHalo=new THREE.Mesh(new THREE.SphereGeometry(2.6,8,8),new THREE.MeshBasicMaterial({color:0xAADDFF,transparent:true,opacity:0,side:THREE.BackSide,depthWrite:false}));head.add(outerHalo);const TRAIL_PTS=perf.trailPts,trailPositions=new Float32Array(TRAIL_PTS*3),trailColors=new Float32Array(TRAIL_PTS*3),trailSizes=new Float32Array(TRAIL_PTS);for(let i=0;i<TRAIL_PTS;i++){trailPositions[i*3]=start.x;trailPositions[i*3+1]=start.y;trailPositions[i*3+2]=start.z;const tc=i/TRAIL_PTS;trailColors[i*3]=1-tc*0.5;trailColors[i*3+1]=1-tc*0.3;trailColors[i*3+2]=1;trailSizes[i]=Math.max(0.08,(1-tc)*1.2);}const trailGeo=new THREE.BufferGeometry();trailGeo.setAttribute('position',new THREE.BufferAttribute(trailPositions,3));trailGeo.setAttribute('color',new THREE.BufferAttribute(trailColors,3));trailGeo.setAttribute('size',new THREE.BufferAttribute(trailSizes,1));const trailMat=new THREE.PointsMaterial({size:0.7,vertexColors:true,transparent:true,opacity:0,sizeAttenuation:true,depthWrite:false,blending:THREE.AdditiveBlending});const trailPoints=new THREE.Points(trailGeo,trailMat);scene.add(trailPoints);const SPARKS=perf.shootSparks,sparkPos=new Float32Array(SPARKS*3),sparkVel=[],sparkLife=[];for(let i=0;i<SPARKS;i++){sparkPos[i*3]=start.x;sparkPos[i*3+1]=start.y;sparkPos[i*3+2]=start.z;sparkVel.push(new THREE.Vector3((Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5));sparkLife.push(Math.random());}const sparkGeo=new THREE.BufferGeometry();sparkGeo.setAttribute('position',new THREE.BufferAttribute(sparkPos,3));const sparkMat=new THREE.PointsMaterial({size:0.5,color:0xFFFFAA,transparent:true,opacity:0,sizeAttenuation:true,depthWrite:false,blending:THREE.AdditiveBlending});const sparks=new THREE.Points(sparkGeo,sparkMat);scene.add(sparks);const TRAIL_HIST=perf.trailHistLen;shootingStars.push({head,innerHalo,outerHalo,trailPoints,trailGeo,trailMat,sparks,sparkGeo,sparkMat,sparkPos,sparkVel,sparkLife,TRAIL_PTS,SPARKS,start:start.clone(),dir,speed:2.2+Math.random()*1.6,lifetime:3.5+Math.random()*1.5,age:0,current:start.clone(),history:Array(TRAIL_HIST).fill(null).map(()=>start.clone()),TRAIL_HIST});}
+
+    function updateShootingStars(dt){for(let i=shootingStars.length-1;i>=0;i--){const s=shootingStars[i];s.age+=dt;const t=s.age/s.lifetime;if(t>=1){scene.remove(s.head,s.trailPoints,s.sparks);s.head.geometry.dispose();s.trailGeo.dispose();s.trailMat.dispose();s.sparkGeo.dispose();s.sparkMat.dispose();shootingStars.splice(i,1);continue;}s.current.add(s.dir.clone().multiplyScalar(s.speed));s.history.push(s.current.clone());if(s.history.length>s.TRAIL_HIST)s.history.shift();s.head.position.copy(s.current);const alpha=t<0.08?t/0.08:t>0.82?(1-t)/0.18:1,flicker=0.88+Math.sin(s.age*60)*0.12;s.head.material.opacity=alpha*flicker;s.head.children[0].material.opacity=alpha*0.75;s.head.children[1].material.opacity=alpha*0.3;const trailArr=s.trailGeo.attributes.position.array;for(let k=0;k<s.TRAIL_PTS;k++){const hi=Math.max(0,s.history.length-1-Math.floor(k*s.history.length/s.TRAIL_PTS)),hp=s.history[hi],sc=(k/s.TRAIL_PTS)*0.6;trailArr[k*3]=hp.x+(Math.random()-0.5)*sc;trailArr[k*3+1]=hp.y+(Math.random()-0.5)*sc;trailArr[k*3+2]=hp.z+(Math.random()-0.5)*sc;}s.trailGeo.attributes.position.needsUpdate=true;s.trailMat.opacity=alpha*0.85;const spArr=s.sparkGeo.attributes.position.array;for(let k=0;k<s.SPARKS;k++){s.sparkLife[k]-=dt*1.5;if(s.sparkLife[k]<=0){spArr[k*3]=s.current.x+(Math.random()-0.5)*0.8;spArr[k*3+1]=s.current.y+(Math.random()-0.5)*0.8;spArr[k*3+2]=s.current.z+(Math.random()-0.5)*0.8;s.sparkLife[k]=0.4+Math.random()*0.6;s.sparkVel[k].set((Math.random()-0.5)*0.6,(Math.random()-0.5)*0.6,(Math.random()-0.5)*0.6);}else{spArr[k*3]+=s.sparkVel[k].x;spArr[k*3+1]+=s.sparkVel[k].y;spArr[k*3+2]+=s.sparkVel[k].z;}}s.sparkGeo.attributes.position.needsUpdate=true;s.sparkMat.opacity=alpha*0.9;if(spaceHovered&&spaceHovered.obj===s){const vec=s.current.clone().project(camera);const sx=(vec.x*0.5+0.5)*innerWidth,sy=(vec.y*-0.5+0.5)*innerHeight;const prev=spaceHovered.lastDist||0,cur=camera.position.distanceTo(s.current);spaceHovered.lastDist=cur;showSpaceTooltip(sx,sy,'Shooting Star','✦ Shooting Star',getDistLabel(s.current),cur-prev);}}}
+
+    function buildRockGeometry(){const geo=new THREE.IcosahedronGeometry(1.0,1),pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const nx=pos.getX(i),ny=pos.getY(i),nz=pos.getZ(i),disp=0.55+Math.random()*0.7,crater=Math.random()<0.2?0.5+Math.random()*0.3:1;pos.setXYZ(i,nx*disp*crater,ny*disp*crater,nz*disp*crater);}pos.needsUpdate=true;geo.computeVertexNormals();return geo;}
+
+    function spawnMeteorite(){const theta=Math.random()*Math.PI*2,phi=Math.acos(Math.random()*2-1),dist=150+Math.random()*60;const start=new THREE.Vector3(dist*Math.sin(phi)*Math.cos(theta),dist*Math.sin(phi)*Math.sin(theta),dist*Math.cos(phi));const dirToEarth=start.clone().negate().normalize(),perpA=new THREE.Vector3().crossVectors(dirToEarth,new THREE.Vector3(0,1,0)).normalize(),perpB=new THREE.Vector3().crossVectors(dirToEarth,perpA).normalize();const sideways=perpA.clone().multiplyScalar((Math.random()-0.5)*0.9).add(perpB.clone().multiplyScalar((Math.random()-0.5)*0.9));const dir=dirToEarth.clone().multiplyScalar(0.15).add(sideways).normalize();const rockScale=0.9+Math.random()*1.4;const rockMat=new THREE.MeshStandardMaterial({color:new THREE.Color(0.28+Math.random()*0.12,0.22+Math.random()*0.1,0.15+Math.random()*0.08),roughness:0.92,metalness:0.08,transparent:true,opacity:0});const mesh=new THREE.Mesh(buildRockGeometry(),rockMat);mesh.position.copy(start);mesh.scale.setScalar(rockScale);mesh.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);scene.add(mesh);const TRAIL_PTS=perf.meteorTrailPts,trailPos=new Float32Array(TRAIL_PTS*3);for(let i=0;i<TRAIL_PTS;i++){trailPos[i*3]=start.x;trailPos[i*3+1]=start.y;trailPos[i*3+2]=start.z;}const tGeo=new THREE.BufferGeometry();tGeo.setAttribute('position',new THREE.BufferAttribute(trailPos,3));const tMat=new THREE.LineBasicMaterial({color:0x887766,transparent:true,opacity:0});const trail=new THREE.Line(tGeo,tMat);scene.add(trail);const proxyMat=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false});const proxy=new THREE.Mesh(new THREE.SphereGeometry(rockScale*1.5,6,6),proxyMat);proxy.position.copy(start);scene.add(proxy);const rotSpeed=new THREE.Vector3((Math.random()-0.5)*0.008,(Math.random()-0.5)*0.008,(Math.random()-0.5)*0.008);meteorites.push({mesh,trail,tGeo,tMat,proxy,start:start.clone(),dir,speed:0.12+Math.random()*0.18,lifetime:18+Math.random()*12,TRAIL_PTS,age:0,current:start.clone(),history:Array(TRAIL_PTS).fill(null).map(()=>start.clone()),rotSpeed,label:['Meteoroid','Asteroid','Space Rock','Chondrite','Bolide','Drifter'][Math.floor(Math.random()*6)]});}
+
+    function updateMeteorites(dt){for(let i=meteorites.length-1;i>=0;i--){const m=meteorites[i];m.age+=dt;const t=m.age/m.lifetime;if(t>=1){scene.remove(m.mesh,m.trail,m.proxy);m.mesh.geometry.dispose();m.mesh.material.dispose();m.tGeo.dispose();m.tMat.dispose();m.proxy.geometry.dispose();m.proxy.material.dispose();meteorites.splice(i,1);if(spaceHovered&&spaceHovered.obj===m)hideSpaceTooltip();continue;}m.current.add(m.dir.clone().multiplyScalar(m.speed));m.history.push(m.current.clone());if(m.history.length>m.TRAIL_PTS)m.history.shift();m.mesh.position.copy(m.current);m.proxy.position.copy(m.current);m.mesh.rotation.x+=m.rotSpeed.x;m.mesh.rotation.y+=m.rotSpeed.y;m.mesh.rotation.z+=m.rotSpeed.z;const alpha=t<0.06?t/0.06:t>0.88?(1-t)/0.12:1;m.mesh.material.opacity=alpha*0.92;m.tMat.opacity=alpha*0.18;const tArr=m.tGeo.attributes.position.array;for(let k=0;k<m.TRAIL_PTS;k++){const hi=Math.max(0,m.history.length-1-Math.floor(k*m.history.length/m.TRAIL_PTS)),hp=m.history[hi];tArr[k*3]=hp.x;tArr[k*3+1]=hp.y;tArr[k*3+2]=hp.z;}m.tGeo.attributes.position.needsUpdate=true;if(spaceHovered&&spaceHovered.obj===m){const vec=m.current.clone().project(camera);const sx=(vec.x*0.5+0.5)*innerWidth,sy=(vec.y*-0.5+0.5)*innerHeight;const prev=spaceHovered.lastDist||0,cur=camera.position.distanceTo(m.current);spaceHovered.lastDist=cur;showSpaceTooltip(sx,sy,'Meteoroid','☄ '+m.label,getDistLabel(m.current),cur-prev);}}}
+
+    function createCityNodes(R) {
+        cities.forEach(city => {
+            let lat, lon;
+            if (city.bounds) {
+                lat = (city.bounds.north + city.bounds.south) / 2;
+                lon = (city.bounds.east  + city.bounds.west)  / 2;
+            } else if (city.centerLat !== undefined && city.centerLon !== undefined) {
+                lat = city.centerLat; lon = city.centerLon;
+            } else { console.warn('City missing bounds/center, skipping:', city.name); return; }
+            const pos = latLonToVector3(lat, lon, R + 0.25);
+            let color;
+            switch(city.status) {
+                case 'ACTIVE': case 'FILLING': color = 0xFFD700; break;
+                case 'PRE-GENERATED':           color = 0xB8860B; break;
+                default:                        color = 0x4ECAFF; break;
+            }
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.8, metalness: 0.8, roughness: 0.2, transparent: true, opacity: 1 });
+            const node = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.4), mat);
+            node.position.copy(pos);
+            node.userData = { cityId: city.id, cityData: city, name: city.name, status: city.status, originalColor: color, isHovered: false, isClicked: false, pulsePhase: Math.random()*Math.PI*2, flashPhase: 0 };
+            scene.add(node); cityNodes.push(node);
+            const light = new THREE.PointLight(color, 1.5, 15); light.position.copy(pos);
+            node.userData.light = light; scene.add(light);
+        });
+        createWebConnections(R);
+    }
+
+    function createWebConnections(R){const positions=[],segs=perf.curveSegments;let count=0;if(!isPC){cityNodes.forEach((n1,i)=>{const dists=cityNodes.map((n2,j)=>({index:j,d:n1.position.distanceTo(n2.position)})).filter((_,j)=>j!==i).sort((a,b)=>a.d-b.d);for(let k=0;k<Math.min(3,dists.length);k++){if(count>=perf.maxConnections)break;const n2=cityNodes[dists[k].index];for(let s=0;s<segs;s++){const p1=slerp(n1.position,n2.position,s/segs,R+0.3),p2=slerp(n1.position,n2.position,(s+1)/segs,R+0.3);positions.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);}count++;}});}else{for(let i=0;i<cityNodes.length;i++)for(let j=i+1;j<cityNodes.length;j++)for(let k=0;k<segs;k++){const p1=slerp(cityNodes[i].position,cityNodes[j].position,k/segs,R+0.3),p2=slerp(cityNodes[i].position,cityNodes[j].position,(k+1)/segs,R+0.3);positions.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);}}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));webLines=new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0x87CEEB,transparent:true,opacity:perf.webOpacity}));scene.add(webLines);}
+
+    function slerp(pos1,pos2,t,radius){const v1=pos1.clone().normalize(),v2=pos2.clone().normalize(),dot=Math.max(-1,Math.min(1,v1.dot(v2))),theta=Math.acos(dot);if(Math.abs(theta)<0.001)return v1.clone().multiplyScalar(radius);const s=Math.sin(theta),w1=Math.sin((1-t)*theta)/s,w2=Math.sin(t*theta)/s;return new THREE.Vector3(w1*v1.x+w2*v2.x,w1*v1.y+w2*v2.y,w1*v1.z+w2*v2.z).normalize().multiplyScalar(radius);}
+    function latLonToVector3(lat,lon,radius){const phi=(90-lat)*(Math.PI/180),theta=(lon+180)*(Math.PI/180);return new THREE.Vector3(-(radius*Math.sin(phi)*Math.cos(theta)),radius*Math.cos(phi),radius*Math.sin(phi)*Math.sin(theta));}
+
+    /* ── POINTER DOWN ── */
+    function onPointerDown(e){isDragging=true;const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;mouseXDown=cx-innerWidth/2;mouseYDown=cy-innerHeight/2;}
+
+    /* ── POINTER MOVE ── */
+    function onPointerMove(e){
+        if(sidebar.classList.contains('open'))return;
+        const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;
+        if(!isMobile){
+            mouse.x=(cx/innerWidth)*2-1; mouse.y=-(cy/innerHeight)*2+1;
+            raycaster.setFromCamera(mouse,camera);
+            const nodeHits=raycaster.intersectObjects(cityNodes);
+            // Clear previous hover if moving away — but only reset visuals if not clicked
+            if(selectedNode&&(!nodeHits.length||nodeHits[0].object!==selectedNode)){
+                if(!selectedNode.userData.isClicked){
+                    selectedNode.material.color.setHex(selectedNode.userData.originalColor);
+                    selectedNode.material.emissive.setHex(selectedNode.userData.originalColor);
+                    selectedNode.material.emissiveIntensity=1.0;
+                    selectedNode.userData.isHovered=false;
+                    if(selectedNode.userData.light){selectedNode.userData.light.color.setHex(selectedNode.userData.originalColor);selectedNode.userData.light.intensity=1.5;}
+                }
+                selectedNode=null;
+                // Only hide hover tooltip if no node is currently pinned (clicked)
+                if(!clickedNode||!clickedNode.userData.isClicked){
+                    document.getElementById('hover-tooltip').classList.remove('show');
+                    document.getElementById('hover-tooltip').classList.remove('pinned');
+                }
+            }
+            if(nodeHits.length>0){
+                const hit=nodeHits[0].object;
+                // Only apply hover visual if this node is not the clicked/pinned one
+                if(hit!==selectedNode&&!hit.userData.isClicked){
+                    selectedNode=hit;
+                    selectedNode.material.color.setHex(0xFFD97A);
+                    selectedNode.material.emissive.setHex(0xFFD97A);
+                    selectedNode.material.emissiveIntensity=2.5;
+                    selectedNode.userData.isHovered=true;
+                    if(selectedNode.userData.light){selectedNode.userData.light.color.setHex(0xFFD97A);selectedNode.userData.light.intensity=3.5;}
+                } else if(hit.userData.isClicked) {
+                    // Hovering over the already-clicked node — just track it as selectedNode
+                    selectedNode=hit;
+                }
+                document.body.style.cursor='pointer';
+                hideSpaceTooltip();
+                return;
+            }
+            if(sunMesh3d){const sunHits=raycaster.intersectObject(sunMesh3d);if(sunHits.length>0){document.body.style.cursor='crosshair';const vec=SUN_POS.clone().project(camera);const sx=(vec.x*0.5+0.5)*innerWidth,sy=(vec.y*-0.5+0.5)*innerHeight;const prev=spaceHovered&&spaceHovered.type==='sun'?(spaceHovered.lastDist||0):0,cur=camera.position.distanceTo(SUN_POS);if(!spaceHovered||spaceHovered.type!=='sun')spaceHovered={type:'sun',obj:sunMesh3d,lastDist:cur};spaceHovered.lastDist=cur;showSpaceTooltip(sx,sy,'Solar Body','☀ The Sun',getDistLabel(SUN_POS),cur-prev);return;}}
+            const metHits=raycaster.intersectObjects(meteorites.map(m=>m.proxy));if(metHits.length>0){document.body.style.cursor='crosshair';const met=meteorites.find(m=>m.proxy===metHits[0].object);if(met&&(!spaceHovered||spaceHovered.obj!==met))spaceHovered={type:'meteor',obj:met,lastDist:camera.position.distanceTo(met.current)};return;}
+            const starHits=raycaster.intersectObjects(shootingStars.map(s=>s.head));if(starHits.length>0){document.body.style.cursor='crosshair';const star=shootingStars.find(s=>s.head===starHits[0].object);if(star&&(!spaceHovered||spaceHovered.obj!==star))spaceHovered={type:'star',obj:star,lastDist:camera.position.distanceTo(star.current)};return;}
+            if(!spaceHovered)hideSpaceTooltip();
+            document.body.style.cursor='default';
+        }
+        if(isDragging&&!isAnimatingCamera){const mx=cx-innerWidth/2,my=cy-innerHeight/2;targetRotX=(mx-mouseXDown)*DRAG;targetRotY=(my-mouseYDown)*DRAG;}
+    }
+
+    function onPointerUp(){isDragging=false;}
+
+    /* ── CLICK ── */
+    function onClick(e){
+        if(isAnimatingCamera)return;
+        const cx=e.changedTouches?e.changedTouches[0].clientX:e.clientX,cy=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+        mouse.x=(cx/innerWidth)*2-1; mouse.y=-(cy/innerHeight)*2+1;
+        raycaster.setFromCamera(mouse,camera);
+        const hits=raycaster.intersectObjects(cityNodes);
+        if(hits.length>0){
+            const node=hits[0].object;
+            // ── Second click on same node → enter city world ──
+            if(clickedNode&&clickedNode===node&&clickedNode.userData.isClicked){
+                enterCityWorld(node.userData.cityId);
+                return;
+            }
+            // ── Clicking a different node — clear previous selection ──
+            if(clickedNode&&clickedNode!==node){
+                clearClickedNode(clickedNode);
+            }
+            // ── First click: select + animate + pin tooltip ──
+            clickedNode=node;
+            clickedNode.userData.isClicked=true;
+            clickedNode.userData.flashPhase=0;
+            selectCity(clickedNode);
+        } else {
+            // ── Clicked empty space — deselect everything ──
+            if(clickedNode){
+                clearClickedNode(clickedNode);
+                clickedNode=null;
+            }
+            document.getElementById('city-label').classList.remove('show');
+        }
+    }
+
+    /* ── CLEAR CLICKED NODE — restore original appearance ── */
+    function clearClickedNode(node){
+        node.userData.isClicked=false;
+        node.userData.flashPhase=0;
+        node.material.color.setHex(node.userData.originalColor);
+        node.material.emissive.setHex(node.userData.originalColor);
+        node.material.emissiveIntensity=1.0;
+        if(node.userData.light){
+            node.userData.light.color.setHex(node.userData.originalColor);
+            node.userData.light.intensity=1.5;
+        }
+    }
+
+    /* ── SELECT CITY (first click) ── */
+    function selectCity(node){
+        const city=node.userData.cityData;
+        const label=document.getElementById('city-label');
+        label.innerHTML=`<div class="hud-label-inner"><div class="hud-label-tag">// ${city.status} CITY</div><div class="hud-label-name">${city.name}</div><div class="hud-label-footer"><span class="hud-dot"></span><span>TAP AGAIN TO ENTER</span></div></div><div class="hud-arrow"></div>`;
+        label.classList.add('show');
+        // Hide hover tooltip — only the HUD box shows during camera animation
+        const tip=document.getElementById('hover-tooltip');
+        tip.classList.remove('show');
+        tip.classList.remove('pinned');
+        tip.dataset.trackedCityId='';
+        // Animate camera to node
+        animateCameraToNode(node);
+    }
+
+    /* ── ENTER CITY WORLD (second click) ── */
+    function enterCityWorld(cityId){
+        sessionStorage.setItem('bdu_selected_city', cityId);
+        window.location.href='brand-universe-next/city-map.html?cityId='+encodeURIComponent(cityId);
+    }
+
+    /* ── ANIMATE CAMERA TO NODE ── */
+    function animateCameraToNode(node){
+        isAnimatingCamera=true;
+        const target=node.position.clone();
+        const camTarget=target.clone().add(target.clone().normalize().multiplyScalar(5));
+        const startPos=camera.position.clone(), t0=Date.now();
+        function loop(){
+            const p=Math.min((Date.now()-t0)/1500,1);
+            const e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+            camera.position.lerpVectors(startPos,camTarget,e);
+            controls.target.lerp(target,e);
+            controls.update();
+            if(p<1)requestAnimationFrame(loop);
+            else isAnimatingCamera=false;
+        }
+        loop();
+    }
+
+    /* ── SEARCH ── */
+    function initSearch(){
+        const bar=document.getElementById('search-bar'), res=document.getElementById('search-results');
+        bar.addEventListener('input',function(){
+            const q=this.value.trim().toLowerCase();
+            if(!q){res.classList.remove('show');res.innerHTML='';return;}
+            const filtered=cities.filter(c=>c.name.toLowerCase().includes(q)).sort((a,b)=>{
+                const as=a.name.toLowerCase().startsWith(q),bs=b.name.toLowerCase().startsWith(q);
+                return as===bs?a.name.localeCompare(b.name):(as?-1:1);
+            });
+            if(filtered.length){
+                res.innerHTML=filtered.map(city=>`<div class="search-result-item" data-city-id="${city.id}"><span>${highlight(city.name,q)}</span><span class="arrow">→</span></div>`).join('');
+                res.classList.add('show');
+                res.querySelectorAll('.search-result-item').forEach(item=>{
+                    item.addEventListener('click',function(){
+                        const cityId=this.dataset.cityId;
+                        const node=cityNodes.find(n=>n.userData.cityId===cityId);
+                        if(node){
+                            // Second click on same node from search → enter city
+                            if(clickedNode&&clickedNode===node&&clickedNode.userData.isClicked){
+                                enterCityWorld(cityId);
+                                bar.value=''; res.classList.remove('show'); res.innerHTML='';
+                                return;
+                            }
+                            // Clear previous selection
+                            if(clickedNode&&clickedNode!==node) clearClickedNode(clickedNode);
+                            // First click: select node
+                            clickedNode=node;
+                            clickedNode.userData.isClicked=true;
+                            clickedNode.userData.flashPhase=0;
+                            selectCity(node);
+                        }
+                        bar.value=''; res.classList.remove('show'); res.innerHTML='';
+                    });
+                });
+            } else {
+                res.innerHTML='<div class="no-results">No Cities Found</div>';
+                res.classList.add('show');
+            }
+        });
+        document.addEventListener('click',e=>{if(!e.target.closest('#search-container'))res.classList.remove('show');});
+        bar.addEventListener('keydown',e=>{if(e.key==='Enter'){const f=res.querySelector('.search-result-item');if(f){f.click();bar.value='';res.classList.remove('show');}}});
+        bar.addEventListener('mousedown',e=>e.stopPropagation());
+        bar.addEventListener('touchstart',e=>e.stopPropagation());
+    }
+
+    function highlight(text,q){const i=text.toLowerCase().indexOf(q);if(i===-1)return text;return text.substring(0,i)+`<span style="color:var(--gold);font-weight:700">${text.substring(i,i+q.length)}</span>`+text.substring(i+q.length);}
+
+    /* ── ANIMATION LOOP ── */
+    let time=0,frame=0,lastTs=0;
+    function animate(ts){
+        requestAnimationFrame(animate);
+        const dt=Math.min((ts-lastTs)/1000,0.05);lastTs=ts;time+=0.01;frame++;
+        if(isMobile&&sceneStartTime>0){recordFPS(ts);checkAdaptivePerformance(ts);}
+        if(earthMesh&&cloudMesh){earthMesh.rotation.y+=targetRotX*0.5;earthMesh.rotation.x+=targetRotY*0.5;cloudMesh.rotation.y+=targetRotX*0.5;cloudMesh.rotation.x+=targetRotY*0.5;targetRotX*=SLOW;targetRotY*=SLOW;if(!isDragging&&!isAnimatingCamera){earthMesh.rotation.y+=perf.autoRotateSpeed;cloudMesh.rotation.y+=perf.autoRotateSpeed*1.2;}}
+        solarFlares.forEach((flare,fi)=>{const t2=time*flare.userData.speed+flare.userData.phase,pulse=Math.max(0,Math.sin(t2)*Math.sin(t2*0.37));flare.material.opacity=pulse*0.55;flare.rotation.z+=0.003+fi*0.001;flare.material.color.setHSL(0.06+pulse*0.04,1,0.5+pulse*0.3);});
+        const skipNodes=activeTierName==='low'&&frame%2!==0;
+        if(!skipNodes){
+            cityNodes.forEach(node=>{
+                node.rotation.x+=perf.nodeRotSpeed;
+                node.rotation.y+=perf.nodeRotSpeed;
+                const scale=1+Math.sin(time+node.userData.pulsePhase)*0.15;
+                node.scale.setScalar(scale);
+                if(node.userData.isClicked){
+                    node.userData.flashPhase+=0.08;
+                    const pulse=0.5+0.5*Math.sin(node.userData.flashPhase);
+                    node.material.color.setHex(0xFFFFFF);
+                    node.material.emissive.setHex(0xFFFFFF);
+                    node.material.emissiveIntensity=1.5+pulse*3;
+                    if(node.userData.light){node.userData.light.color.setHex(0xFFFFFF);node.userData.light.intensity=1.5+pulse*4;}
+                } else if(!node.userData.isHovered){
+                    node.material.emissiveIntensity=1+Math.sin(time*2+node.userData.pulsePhase)*0.3;
+                }
+            });
+        }
+        const skipAtmo=activeTierName==='low'?frame%4!==0:(isMobile&&frame%3!==0);
+        if(!skipAtmo){if(starMesh)starMesh.material.opacity=0.6+Math.sin(time*0.5)*0.2;if(webLines&&webLines.visible)webLines.material.opacity=perf.webOpacity+Math.sin(time*0.5)*0.04;}
+
+        // ── HOVER TOOLTIP: only tracks pure mouse-hover (never clicked node) ──
+        if(!isMobile){
+            const tip=document.getElementById('hover-tooltip');
+            // Only show for hovered node that is NOT the clicked node
+            const nodeForTip=(selectedNode&&selectedNode.userData.isHovered&&!selectedNode.userData.isClicked)?selectedNode:null;
+            if(nodeForTip){
+                const vec=nodeForTip.position.clone().project(camera);
+                const sx=(vec.x*0.5+0.5)*innerWidth, sy=(vec.y*-0.5+0.5)*innerHeight;
+                tip.style.left=sx+'px'; tip.style.top=(sy-12)+'px';
+                if(tip.dataset.trackedCityId!==nodeForTip.userData.cityId){
+                    tip.dataset.trackedCityId=nodeForTip.userData.cityId;
+                    document.getElementById('tt-label-text').textContent='// city';
+                    document.getElementById('tt-name-text').textContent=nodeForTip.userData.name;
+                }
+                tip.classList.remove('pinned');
+                tip.classList.add('show');
+            } else {
+                tip.classList.remove('show');
+                tip.classList.remove('pinned');
+                tip.dataset.trackedCityId='';
+            }
+        }
+
+        // ── CITY LABEL: tracks clicked node position ──
+        if(clickedNode){
+            const label=document.getElementById('city-label');
+            if(label.classList.contains('show')){
+                const vec=clickedNode.position.clone().project(camera);
+                const sx=(vec.x*0.5+0.5)*innerWidth, sy=(vec.y*-0.5+0.5)*innerHeight;
+                label.style.left=sx+'px'; label.style.top=(sy-15)+'px';
+            }
+        }
+
+        // ── SUN tooltip tracking ──
+        if(!isMobile&&spaceHovered&&spaceHovered.type==='sun'){const vec=SUN_POS.clone().project(camera);const sx=(vec.x*0.5+0.5)*innerWidth,sy=(vec.y*-0.5+0.5)*innerHeight;const prev=spaceHovered.lastDist||0,cur=camera.position.distanceTo(SUN_POS);spaceHovered.lastDist=cur;showSpaceTooltip(sx,sy,'Solar Body','☀ The Sun',getDistLabel(SUN_POS),cur-prev);}
+        if(ts>nextShootTime){spawnShootingStar();nextShootTime=ts+(activeTierName==='low'?60000:14000)+Math.random()*(activeTierName==='low'?30000:14000);}
+        if(ts>nextMeteoTime){spawnMeteorite();nextMeteoTime=ts+(activeTierName==='low'?40000:6000)+Math.random()*(activeTierName==='low'?20000:6000);}
+        updateShootingStars(dt);updateMeteorites(dt);controls.update();renderer.render(scene,camera);
+    }
+
+    window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+    async function init(){
+        if(isInitialized)return; isInitialized=true;
+        SUN_POS=new THREE.Vector3(280,60,180);
+        initScene(); const R=createEarth(); createStarfield();
+        await loadCities(); createCityNodes(R); initSearch();
+        window.addEventListener('mousedown',onPointerDown);
+        window.addEventListener('mousemove',onPointerMove);
+        window.addEventListener('mouseup',onPointerUp);
+        window.addEventListener('click',onClick);
+        window.addEventListener('touchstart',onPointerDown,{passive:false});
+        window.addEventListener('touchmove',onPointerMove,{passive:false});
+        window.addEventListener('touchend',onPointerUp);
+        window.addEventListener('touchend',onClick);
+        document.getElementById('instruction-text').innerHTML=isMobile
+            ?'<div>Touch and drag to rotate · Pinch to zoom</div><div>Tap a city node · Tap again to enter</div>'
+            :'<div>Drag to rotate · Scroll to zoom · Hover nodes · Click to select · Click again to enter</div>';
+        nextShootTime=8000; nextMeteoTime=3000;
+        sceneStartTime=performance.now();
+        requestAnimationFrame(animate);
+        setTimeout(()=>document.getElementById('loading').classList.add('hidden'),600);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       FIREBASE AUTH — RBAC BOOT SEQUENCE
+    ═══════════════════════════════════════════════════════════════ */
+    window.addEventListener('load', () => {
+        const unsub = firebase.auth().onAuthStateChanged(async user => {
+            unsub();
+            if (!user) { window.location.href = 'index.html'; return; }
+            try {
+                const db = firebase.firestore();
+                let session;
+                try {
+                    session = await detectRole(user, db);
+                } catch (roleErr) {
+                    console.warn('[BDU] detectRole threw, using fallback:', roleErr);
+                    session = {
+                        uid: user.uid, role: user.email===ADMIN_EMAIL?'admin':'user',
+                        brandId: null, displayName: user.displayName||'',
+                        photoURL: user.photoURL||'',
+                        handle: '@'+(user.displayName||user.email.split('@')[0]).replace(/\s+/g,'').toLowerCase(),
+                        activationStatus: user.email===ADMIN_EMAIL?'active':'inactive',
+                        email: user.email||'',
+                    };
+                    _session = session;
+                }
+                if (session.role !== 'admin') {
+                    try {
+                        const uRef=db.collection('users').doc(user.uid);
+                        const uSnap=await uRef.get();
+                        if(!uSnap.exists){
+                            const username=(user.displayName||user.email.split('@')[0]).replace(/\s+/g,'').toLowerCase().slice(0,20);
+                            await uRef.set({ uid:user.uid, role:'user', username, displayName:user.displayName||'', photoURL:user.photoURL||'', email:user.email||'', credits:0, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+                            session.handle='@'+username; session.displayName=user.displayName||username;
+                            _session={..._session,...session};
+                        }
+                    } catch(profileErr){ console.warn('[BDU] Profile auto-create failed (non-fatal):',profileErr); }
+                }
+                document.getElementById('topUserAvatar').src       = session.photoURL||user.photoURL||'';
+                document.getElementById('topUsername').textContent = session.handle||('@'+(user.displayName||'—').slice(0,12));
+                renderSidebar(document.getElementById('sidebarInner'), SIDEBAR_HANDLERS);
+                async function waitForTHREE(){if(typeof THREE!=='undefined')return;await new Promise(resolve=>{const interval=setInterval(()=>{if(typeof THREE!=='undefined'){clearInterval(interval);resolve();}},50);});}
+                await waitForTHREE();
+                await init();
+            } catch (fatalErr) {
+                console.error('[BDU] Fatal boot error:', fatalErr);
+                if (user.email===ADMIN_EMAIL) {
+                    _session={uid:user.uid,role:'admin',brandId:null,displayName:user.displayName||'Admin',photoURL:user.photoURL||'',handle:'@admin',activationStatus:'active',email:user.email};
+                    document.getElementById('topUserAvatar').src=''; document.getElementById('topUsername').textContent='@admin';
+                    renderSidebar(document.getElementById('sidebarInner'),SIDEBAR_HANDLERS);
+                    init();
+                } else {
+                    alert('Unable to load universe. Please refresh or sign in again.');
+                    firebase.auth().signOut().finally(()=>window.location.href='index.html');
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

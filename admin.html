@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0E0E0E;
+            --bg-secondary: #111111;
+            --bg-card: #151515;
+            --text-primary: #F5F5F5;
+            --text-secondary: #B8B8B8;
+            --accent-gold: #C6A75E;
+            --accent-gold-hover: #D4B96E;
+            --divider: rgba(255, 255, 255, 0.08);
+            --success-green: #10B981;
+            --error-red: #EF4444;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 40px 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: 1px solid var(--divider);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background-color: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        /* Brand List */
+        .brand-list {
+            display: grid;
+            gap: 24px;
+        }
+
+        .brand-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--divider);
+            border-radius: 12px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .brand-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-gold);
+        }
+
+        .brand-info h3 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .brand-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .brand-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .stat {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stat strong {
+            color: var(--accent-gold);
+        }
+
+        .brand-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .approve-btn {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        .approve-btn:hover {
+            background-color: #059669;
+        }
+
+        .reject-btn {
+            background-color: var(--error-red);
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background-color: #DC2626;
+        }
+
+        .view-btn {
+            background-color: transparent;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .view-btn:hover {
+            background-color: rgba(198, 167, 94, 0.1);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .no-brands {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--divider);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 28px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--divider);
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Admin Panel</h1>
+            <p>Manage brand verifications and activations</p>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All Brands</button>
+            <button class="filter-btn" data-filter="under_review">Under Review</button>
+            <button class="filter-btn" data-filter="verified">Verified</button>
+            <button class="filter-btn" data-filter="unverified">Unverified</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="inactive">Inactive</button>
+        </div>
+
+        <div class="brand-list" id="brandList">
+            <div class="loading">Loading brands...</div>
+        </div>
+    </div>
+
+    <!-- Brand Details Modal -->
+    <div class="modal" id="brandModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Brand Details</h2>
+                <button class="close-btn" onclick="closeBrandModal()">&times;</button>
+            </div>
+            <div id="brandDetails"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="scripts/firebase-config.js"></script>
+
+    <script>
+        // ADMIN EMAIL
+        const ADMIN_EMAIL = 'johnrufai242@gmail.com';
+
+        let currentFilter = 'all';
+        let allBrands = [];
+
+        // Check if user is admin
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user || user.email !== ADMIN_EMAIL) {
+                alert('Access denied. Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            loadBrands();
+        });
+
+        // Load all brands
+        async function loadBrands() {
+            try {
+                const snapshot = await firebase.firestore().collection('brands').get();
+                allBrands = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                displayBrands();
+
+                // Listen for real-time updates
+                firebase.firestore().collection('brands').onSnapshot(() => {
+                    loadBrands();
+                });
+            } catch (error) {
+                console.error('Error loading brands:', error);
+                document.getElementById('brandList').innerHTML = 
+                    '<div class="no-brands">Error loading brands</div>';
+            }
+        }
+
+        // Display brands based on filter
+        function displayBrands() {
+            const brandList = document.getElementById('brandList');
+            
+            let filteredBrands = allBrands;
+
+            if (currentFilter === 'under_review') {
+                filteredBrands = allBrands.filter(b => b.verificationStatus === 'under_review');
+            } else if (currentFilter === 'verified') {
+                filteredBrands = allBrands.filter(b => b.verifiedBadge === true);
+            } else if (currentFilter === 'unverified') {
+                filteredBrands = allBrands.filter(b => b.verificationStatus === 'unverified');
+            } else if (currentFilter === 'active') {
+                filteredBrands = allBrands.filter(b => b.activationStatus === 'active');
+            } else if (currentFilter === 'inactive') {
+                filteredBrands = allBrands.filter(b => b.activationStatus === 'inactive');
+            }
+
+            if (filteredBrands.length === 0) {
+                brandList.innerHTML = '<div class="no-brands">No brands found</div>';
+                return;
+            }
+
+            brandList.innerHTML = filteredBrands.map(brand => `
+                <div class="brand-card">
+                    <img src="${brand.photoURL || 'https://via.placeholder.com/60'}" alt="${brand.brandName}" class="brand-avatar">
+                    <div class="brand-info">
+                        <h3>
+                            ${brand.brandName}
+                            ${brand.verifiedBadge ? '<span class="status-badge" style="background-color: rgba(198, 167, 94, 0.2); color: var(--accent-gold);">✓ Verified</span>' : ''}
+                        </h3>
+                        <p>@${brand.username}</p>
+                        <p>${brand.email}</p>
+                        <p style="margin-top: 8px; color: var(--text-primary);">${brand.description || ''}</p>
+                        <div class="brand-stats">
+                            <span class="stat">Category: <strong>${brand.category || 'N/A'}</strong></span>
+                            <span class="stat">Type: <strong>${brand.brandType || 'N/A'}</strong></span>
+                            <span class="stat">Status: <strong>${brand.activationStatus || 'inactive'}</strong></span>
+                        </div>
+                    </div>
+                    <div class="brand-actions">
+                        ${brand.verificationStatus === 'under_review' ? `
+                            <button class="action-btn approve-btn" onclick="approveBrand('${brand.id}')">Approve</button>
+                            <button class="action-btn reject-btn" onclick="rejectBrand('${brand.id}')">Reject</button>
+                        ` : ''}
+                        <button class="action-btn view-btn" onclick="viewBrand('${brand.id}')">View Details</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                displayBrands();
+            });
+        });
+
+        // Approve verification
+        async function approveBrand(brandId) {
+            if (!confirm('Approve this brand for verification?')) return;
+
+            try {
+                await firebase.firestore().collection('brands').doc(brandId).update({
+                    verificationStatus: 'verified',
+                    verifiedBadge: true,
+                    verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('Brand verified successfully!');
+            } catch (error) {
+                console.error('Error approving brand:', error);
+                alert('Error approving brand: ' + error.message);
+            }
+        }
+
+        // Reject verification
+        async function rejectBrand(brandId) {
+            if (!confirm('Reject this verification request?')) return;
+
+            try {
+                await firebase.firestore().collection('brands').doc(brandId).update({
+                    verificationStatus: 'unverified',
+                    verificationRequested: false,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('Verification request rejected.');
+            } catch (error) {
+                console.error('Error rejecting brand:', error);
+                alert('Error rejecting brand: ' + error.message);
+            }
+        }
+
+        // View brand details
+        function viewBrand(brandId) {
+            const brand = allBrands.find(b => b.id === brandId);
+            if (!brand) return;
+
+            const details = `
+                <div class="detail-row">
+                    <span class="detail-label">Brand Name:</span>
+                    <span class="detail-value">${brand.brandName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Username:</span>
+                    <span class="detail-value">@${brand.username}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${brand.email}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Official Email:</span>
+                    <span class="detail-value">${brand.officialEmail || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Website:</span>
+                    <span class="detail-value">${brand.website || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Category:</span>
+                    <span class="detail-value">${brand.category}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Industry:</span>
+                    <span class="detail-value">${brand.industry}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location:</span>
+                    <span class="detail-value">${brand.city}, ${brand.country}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Brand Type:</span>
+                    <span class="detail-value">${brand.brandType}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Activation Status:</span>
+                    <span class="detail-value">${brand.activationStatus}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Verification Status:</span>
+                    <span class="detail-value">${brand.verificationStatus}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Verified Badge:</span>
+                    <span class="detail-value">${brand.verifiedBadge ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">${brand.description || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Social Links:</span>
+                    <span class="detail-value">
+                        ${brand.socialLinks?.instagram ? '<br>Instagram: ' + brand.socialLinks.instagram : ''}
+                        ${brand.socialLinks?.twitter ? '<br>X: ' + brand.socialLinks.twitter : ''}
+                        ${brand.socialLinks?.linkedin ? '<br>LinkedIn: ' + brand.socialLinks.linkedin : ''}
+                    </span>
+                </div>
+            `;
+
+            document.getElementById('brandDetails').innerHTML = details;
+            document.getElementById('brandModal').classList.add('active');
+        }
+
+        function closeBrandModal() {
+            document.getElementById('brandModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

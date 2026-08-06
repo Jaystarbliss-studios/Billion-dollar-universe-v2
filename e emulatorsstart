@@ -1,0 +1,47 @@
+[33mcommit cddb70030f98e3b7400074ac33decd528307ad16[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Fri Feb 20 07:45:25 2026 +0100
+
+    fixed all touch issues with slots and camera view control
+
+[33mcommit 18c1adf87ead3d9e90aab3b4440e74af1e4c8ec1[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Fri Feb 20 07:35:48 2026 +0100
+
+    fixed admin logi routes o all pages... admin details now pulled from google account and never get's redirected to brand dashboard or user dashboard
+
+[33mcommit ade399e09367202c6add92c8ea55fad664667919[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 18:30:01 2026 +0100
+
+    fixed admin login and dashboard
+
+[33mcommit ca546d5833f1375ec217e81f663a2639d76b0f3b[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 06:40:38 2026 +0100
+
+    fixed the UI for brand and user sidebardifference, updated firestore rules and added role engines
+
+[33mcommit e2ec1dc7543f80b4b0f1586e0b87110c75a7c9eb[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 05:32:27 2026 +0100
+
+    fixed modular upgrades and slot bar covering industry texts
+
+[33mcommit 7c4026d2ff8535fef77d98bc675956d85124c86d[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 01:50:28 2026 +0100
+
+    replaced universe with ecosystem
+
+[33mcommit ebe436fb942191fb59ab96a3fa8e8a1cba83d8f3[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 01:47:29 2026 +0100
+
+    fixed the sign up pop conflict with the inline sign up
+
+[33mcommit 2d78b1b5b981c073ea4907d9131ab1770dd2d130[m
+Author: Jaystarbliss <johnrufai@gmail.com>
+Date:   Thu Feb 19 01:07:41 2026 +0100
+
+    First version of bdu 1.0

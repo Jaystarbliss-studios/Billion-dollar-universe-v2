@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Command — Billion Dollar Universe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C6A85E;
+      --gold-dim:    rgba(198,168,94,0.18);
+      --gold-glow:   rgba(198,168,94,0.35);
+      --cyan:        #4ECAFF;
+      --cyan-dim:    rgba(78,202,255,0.12);
+      --red:         #FF4060;
+      --green:       #00F5A0;
+      --panel:       rgba(4,10,22,0.88);
+      --edge:        rgba(78,202,255,0.14);
+      --bg:          #020610;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: #d0e8f8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── STARFIELD BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(198,168,94,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(78,202,255,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, rgba(255,64,96,0.02) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── LAYOUT ── */
+    .shell {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 56px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(2,6,16,0.85);
+      border-bottom: 1px solid var(--edge);
+      backdrop-filter: blur(16px);
+      position: sticky; top: 0; z-index: 200;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo { width: 28px; height: auto; }
+    .topbar-brand {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 2.5px; color: rgba(255,255,255,0.7);
+    }
+    .topbar-divider { width: 1px; height: 20px; background: var(--edge); }
+    .topbar-tag {
+      font-family: 'Orbitron', monospace;
+      font-size: 8px; letter-spacing: 2px;
+      color: var(--gold); opacity: 0.8;
+      border: 1px solid rgba(198,168,94,0.25);
+      padding: 3px 10px; border-radius: 2px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .tb-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: rgba(255,255,255,0.3);
+    }
+    .tb-user { display: flex; align-items: center; gap: 9px; }
+    .tb-avatar {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: 1.5px solid var(--gold);
+      object-fit: cover;
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+    .tb-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 9px; letter-spacing: 1.5px; color: var(--gold);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: rgba(2,6,18,0.92);
+      border-right: 1px solid var(--edge);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar::before {
+      content: ''; display: block; height: 2px; flex-shrink: 0;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--cyan), var(--gold), transparent);
+      background-size: 200% 100%;
+      animation: scanBar 3s linear infinite;
+    }
+    @keyframes scanBar { 0%{background-position:-200% center} 100%{background-position:200% center} }
+
+    .sb-section { padding: 20px 16px 8px; }
+    .sb-section-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 7px; letter-spacing: 2.5px;
+      color: rgba(180,210,230,0.28); font-weight: 700;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .sb-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 5px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+      color: rgba(200,225,240,0.65);
+      border: 1px solid transparent;
+      cursor: pointer; transition: all 0.18s;
+      margin-bottom: 2px; text-decoration: none;
+    }
+    .sb-link:hover {
+      background: var(--cyan-dim);
+      border-color: var(--edge);
+      color: #fff; padding-left: 16px;
+    }
+    .sb-link.active {
+      background: var(--gold-dim);
+      border-color: rgba(198,168,94,0.3);
+      color: var(--gold);
+    }
+    .sb-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+    .sb-badge {
+      margin-left: auto;
+      font-family: 'Orbitron', monospace;
+      font-size: 7px; letter-spacing: 1px; font-weight: 700;
+      padding: 2px 7px; border-radius: 2px;
+    }
+    .badge-gold   { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(198,168,94,0.3); }
+    .badge-cyan   { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(78,202,255,0.25); }
+    .badge-red    { background: rgba(255,64,96,0.1); color: var(--red); border: 1px solid rgba(255,64,96,0.3); }
+    .badge-green  { background: rgba(0,245,160,0.08); color: var(--green); border: 1px solid rgba(0,245,160,0.25); }
+
+    .sb-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--edge), transparent); margin: 6px 16px; }
+
+    .sb-logout {
+      margin: auto 16px 20px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 5px;
+      border: 1px solid rgba(255,64,96,0.2);
+      color: var(--red); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+    }
+    .sb-logout:hover { background: rgba(255,64,96,0.08); border-color: rgba(255,64,96,0.4); }
+
+    /* ── MAIN ── */
+    .main {
+      overflow-y: auto;
+      padding: 28px 28px 48px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; }
+    .page-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px; font-weight: 900; letter-spacing: 1.5px;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(198,168,94,0.4);
+    }
+    .page-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: rgba(180,210,230,0.35);
+      letter-spacing: 1px; margin-top: 5px;
+    }
+    .page-actions { display: flex; gap: 10px; }
+    .btn {
+      font-family: 'Orbitron', monospace; font-size: 8px;
+      font-weight: 700; letter-spacing: 1.5px;
+      padding: 10px 18px; border-radius: 4px; border: none;
+      cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #C6A85E, #9a7a3a);
+      color: #0a0605;
+      box-shadow: 0 4px 20px rgba(198,168,94,0.3);
+    }
+    .btn-gold:hover { box-shadow: 0 6px 28px rgba(198,168,94,0.5); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent; color: var(--cyan);
+      border: 1px solid rgba(78,202,255,0.3);
+    }
+    .btn-ghost:hover { background: var(--cyan-dim); border-color: var(--cyan); }
+
+    /* ── ALERT BANNER ── */
+    .alert-banner {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, rgba(198,168,94,0.08), rgba(198,168,94,0.04));
+      border: 1px solid rgba(198,168,94,0.3);
+      border-radius: 6px;
+      font-size: 13px; font-weight: 600; color: rgba(255,240,200,0.85);
+    }
+    .alert-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0;
+      box-shadow: 0 0 8px var(--gold);
+      animation: pulse 1.3s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+    .alert-text { flex: 1; }
+    .alert-action {
+      font-family: 'Orbitron', monospace;
+      font-size: 8px; letter-spacing: 1.5px;
+      color: var(--gold); cursor: pointer;
+      border: 1px solid rgba(198,168,94,0.3);
+      padding: 5px 12px; border-radius: 3px;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .alert-action:hover { background: var(--gold-dim); }
+
+    /* ── STATS GRID ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .stat-card {
+      background: rgba(4,10,24,0.7);
+      border: 1px solid var(--edge);
+      border-radius: 8px; padding: 20px 22px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent, var(--gold)), transparent);
+    }
+    .stat-card:hover {
+      border-color: rgba(78,202,255,0.25);
+      box-shadow: 0 0 24px rgba(78,202,255,0.06);
+    }
+    .stat-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 7.5px; letter-spacing: 2px;
+      color: rgba(180,210,230,0.4); margin-bottom: 10px;
+    }
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
+      color: #fff; line-height: 1;
+    }
+    .stat-value.loading { color: rgba(255,255,255,0.15); }
+    .stat-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: rgba(180,210,230,0.3);
+      margin-top: 6px; letter-spacing: 0.5px;
+    }
+    .stat-icon {
+      position: absolute; right: 16px; top: 16px;
+      font-size: 22px; opacity: 0.12;
+    }
+    .stat-delta {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      padding: 2px 7px; border-radius: 2px; margin-top: 6px;
+    }
+    .delta-up   { background: rgba(0,245,160,0.08); color: var(--green); }
+    .delta-warn { background: rgba(255,200,0,0.08); color: #FFD060; }
+
+    /* ── TWO-COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── PANEL ── */
+    .panel {
+      background: rgba(4,10,24,0.7);
+      border: 1px solid var(--edge);
+      border-radius: 8px; overflow: hidden;
+    }
+    .panel-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--edge);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 2px; color: rgba(180,210,230,0.7);
+    }
+    .panel-action {
+      font-family: 'Orbitron', monospace; font-size: 7px;
+      letter-spacing: 1.5px; color: var(--cyan); cursor: pointer;
+      transition: color 0.18s; text-decoration: none;
+    }
+    .panel-action:hover { color: #fff; }
+    .panel-body { padding: 20px; }
+
+    /* ── QUICK-ACCESS GRID ── */
+    .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .qa-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; cursor: pointer;
+      transition: all 0.18s; text-decoration: none;
+    }
+    .qa-card:hover {
+      background: var(--cyan-dim);
+      border-color: rgba(78,202,255,0.2);
+      transform: translateY(-1px);
+    }
+    .qa-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .qa-icon.gold   { background: var(--gold-dim); }
+    .qa-icon.cyan   { background: var(--cyan-dim); }
+    .qa-icon.red    { background: rgba(255,64,96,0.1); }
+    .qa-icon.green  { background: rgba(0,245,160,0.08); }
+    .qa-icon.purple { background: rgba(180,100,255,0.1); }
+    .qa-icon.blue   { background: rgba(60,120,255,0.1); }
+    .qa-name {
+      font-size: 13px; font-weight: 700; color: rgba(220,235,255,0.85);
+      letter-spacing: 0.3px;
+    }
+    .qa-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: rgba(150,190,220,0.4); margin-top: 2px;
+    }
+
+    /* ── PENDING VERIFICATIONS ── */
+    .pend-list { display: flex; flex-direction: column; gap: 8px; }
+    .pend-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 5px;
+    }
+    .pend-logo {
+      width: 34px; height: 34px; border-radius: 6px;
+      object-fit: cover; border: 1px solid rgba(198,168,94,0.25);
+      flex-shrink: 0; background: rgba(198,168,94,0.1);
+    }
+    .pend-info { flex: 1; min-width: 0; }
+    .pend-name { font-size: 13px; font-weight: 700; color: rgba(220,235,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pend-meta { font-family: 'Space Mono', monospace; font-size: 8px; color: rgba(150,190,220,0.4); margin-top: 2px; }
+    .pend-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .pend-btn {
+      font-family: 'Orbitron', monospace; font-size: 7px;
+      letter-spacing: 1px; font-weight: 700;
+      padding: 5px 10px; border-radius: 3px; border: none;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .pend-btn.approve { background: rgba(0,245,160,0.12); color: var(--green); border: 1px solid rgba(0,245,160,0.3); }
+    .pend-btn.approve:hover { background: rgba(0,245,160,0.22); }
+    .pend-btn.reject  { background: rgba(255,64,96,0.1); color: var(--red); border: 1px solid rgba(255,64,96,0.25); }
+    .pend-btn.reject:hover { background: rgba(255,64,96,0.2); }
+    .pend-empty {
+      text-align: center; padding: 24px;
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      letter-spacing: 2px; color: rgba(180,210,230,0.2);
+    }
+
+    /* ── ACTIVITY LOG ── */
+    .log-list { display: flex; flex-direction: column; }
+    .log-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(78,202,255,0.05);
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      margin-top: 4px; flex-shrink: 0;
+    }
+    .log-dot.gold   { background: var(--gold); box-shadow: 0 0 6px var(--gold-glow); }
+    .log-dot.cyan   { background: var(--cyan); box-shadow: 0 0 6px rgba(78,202,255,0.4); }
+    .log-dot.red    { background: var(--red); box-shadow: 0 0 6px rgba(255,64,96,0.35); }
+    .log-dot.green  { background: var(--green); box-shadow: 0 0 6px rgba(0,245,160,0.35); }
+    .log-action { font-size: 12px; font-weight: 600; color: rgba(220,235,255,0.8); }
+    .log-detail { font-family: 'Space Mono', monospace; font-size: 8px; color: rgba(150,190,220,0.4); margin-top: 2px; }
+    .log-time { font-family: 'Space Mono', monospace; font-size: 8px; color: rgba(150,190,220,0.3); margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+    .log-empty {
+      text-align: center; padding: 24px;
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      letter-spacing: 2px; color: rgba(180,210,230,0.2);
+    }
+
+    /* ── SYSTEM HEALTH ── */
+    .health-grid { display: flex; flex-direction: column; gap: 14px; }
+    .health-row { display: flex; align-items: center; gap: 12px; }
+    .health-label { font-size: 12px; font-weight: 600; color: rgba(200,225,240,0.65); width: 130px; flex-shrink: 0; }
+    .health-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .health-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+    .health-fill.green  { background: var(--green); box-shadow: 0 0 8px rgba(0,245,160,0.5); }
+    .health-fill.gold   { background: var(--gold);  box-shadow: 0 0 8px var(--gold-glow); }
+    .health-fill.cyan   { background: var(--cyan);  box-shadow: 0 0 8px rgba(78,202,255,0.4); }
+    .health-pct { font-family: 'Space Mono', monospace; font-size: 10px; color: rgba(180,210,230,0.5); width: 36px; text-align: right; flex-shrink: 0; }
+
+    /* ── LOADING ── */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      transition: opacity 0.6s ease;
+    }
+    #loading-screen.done { opacity: 0; pointer-events: none; }
+    .ld-ring {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid rgba(198,168,94,0.15);
+      border-top-color: var(--gold);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ld-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; letter-spacing: 4px; color: var(--gold);
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 5000; opacity: 0; pointer-events: none;
+      transition: all 0.4s ease; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast-inner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px;
+      background: rgba(4,12,28,0.9);
+      border: 1px solid rgba(198,168,94,0.3);
+      border-radius: 5px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(198,168,94,0.1);
+      backdrop-filter: blur(16px);
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      letter-spacing: 1.5px; color: var(--gold);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .qa-grid { grid-template-columns: 1fr; }
+      .main { padding: 16px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="ld-ring"></div>
+  <div class="ld-text">LOADING ADMIN</div>
+</div>
+
+<div id="toast"><div class="toast-inner" id="toast-text"></div></div>
+
+<div class="shell">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <img src="assets/images/logo.png" alt="Logo" class="topbar-logo">
+      <span class="topbar-brand">Billion Dollar Universe</span>
+      <div class="topbar-divider"></div>
+      <span class="topbar-tag">ADMIN COMMAND</span>
+    </div>
+    <div class="topbar-right">
+      <span class="tb-time" id="live-time">—</span>
+      <div class="tb-user">
+        <img id="admin-avatar" src="" alt="Admin" class="tb-avatar">
+        <span class="tb-name" id="admin-name">ADMIN</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-section-label">// Overview</div>
+      <a class="sb-link active" href="admin-home.html">
+        <span class="sb-icon">⌂</span> Admin Home
+      </a>
+      <a class="sb-link" href="brand-universe.html">
+        <span class="sb-icon">◎</span> Universe Map
+        <span class="sb-badge badge-cyan">LIVE</span>
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">// Management</div>
+      <a class="sb-link" href="admin-dashboard.html">
+        <span class="sb-icon">⊞</span> Admin Panel
+      </a>
+      <a class="sb-link" href="admin-users.html">
+        <span class="sb-icon">👥</span> Manage Users
+      </a>
+      <a class="sb-link" href="admin-brands.html">
+        <span class="sb-icon">🏷</span> Manage Brands
+        <span class="sb-badge badge-gold" id="sb-pend-count">—</span>
+      </a>
+      <a class="sb-link" href="admin-slots.html">
+        <span class="sb-icon">▦</span> All Slots
+      </a>
+      <a class="sb-link" href="admin-cities.html">
+        <span class="sb-icon">🌍</span> City Worlds
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">// Analytics</div>
+      <a class="sb-link" href="admin-leaderboard.html">
+        <span class="sb-icon">⬡</span> Leaderboard
+      </a>
+      <a class="sb-link" href="admin-analytics.html">
+        <span class="sb-icon">📊</span> Analytics
+        <span class="sb-badge badge-cyan">SOON</span>
+      </a>
+      <a class="sb-link" href="admin-ads.html">
+        <span class="sb-icon">▶</span> Review Ads
+      </a>
+      <a class="sb-link" href="admin-reports.html">
+        <span class="sb-icon">⚑</span> Reports
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-logout" id="logout-btn">
+      <span>⏻</span> LOGOUT
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">COMMAND CENTER</div>
+        <div class="page-sub" id="admin-handle">// @admin · SYSTEM OPERATOR</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost" onclick="refreshAll()">↻ REFRESH</button>
+        <button class="btn btn-gold" onclick="window.location.href='brand-universe.html'">◎ ENTER UNIVERSE</button>
+      </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alert-banner" style="display:none;">
+      <div class="alert-dot"></div>
+      <span class="alert-text" id="alert-text">—</span>
+      <span class="alert-action" onclick="window.location.href='admin-brands.html'">REVIEW →</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent: var(--cyan)">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">TOTAL USERS</div>
+        <div class="stat-value loading" id="stat-users">—</div>
+        <div class="stat-sub">Registered accounts</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--gold)">
+        <div class="stat-icon">🏷</div>
+        <div class="stat-label">TOTAL BRANDS</div>
+        <div class="stat-value loading" id="stat-brands">—</div>
+        <div class="stat-sub" id="stat-brands-sub">Loading…</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--green)">
+        <div class="stat-icon">▦</div>
+        <div class="stat-label">SLOTS OCCUPIED</div>
+        <div class="stat-value loading" id="stat-slots">—</div>
+        <div class="stat-sub">Across all worlds</div>
+      </div>
+      <div class="stat-card" style="--accent: #FF8060">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-label">PENDING VERIFICATION</div>
+        <div class="stat-value loading" id="stat-pending">—</div>
+        <div class="stat-sub">Awaiting review</div>
+      </div>
+    </div>
+
+    <!-- Main content grid -->
+    <div class="two-col">
+
+      <!-- Quick Access -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">QUICK ACCESS</span>
+        </div>
+        <div class="panel-body">
+          <div class="qa-grid">
+            <a class="qa-card" href="admin-users.html">
+              <div class="qa-icon cyan">👥</div>
+              <div>
+                <div class="qa-name">Manage Users</div>
+                <div class="qa-sub">Roles & accounts</div>
+              </div>
+            </a>
+            <a class="qa-card" href="admin-brands.html">
+              <div class="qa-icon gold">🏷</div>
+              <div>
+                <div class="qa-name">Manage Brands</div>
+                <div class="qa-sub">Verify & activate</div>
+              </div>
+            </a>
+            <a class="qa-card" href="admin-slots.html">
+              <div class="qa-icon blue">▦</div>
+              <div>
+                <div class="qa-name">All Slots</div>
+                <div class="qa-sub">Browse by world</div>
+              </div>
+            </a>
+            <a class="qa-card" href="admin-leaderboard.html">
+              <div class="qa-icon purple">⬡</div>
+              <div>
+                <div class="qa-name">Leaderboard</div>
+                <div class="qa-sub">Global rankings</div>
+              </div>
+            </a>
+            <a class="qa-card" href="admin-ads.html">
+              <div class="qa-icon green">▶</div>
+              <div>
+                <div class="qa-name">Review Ads</div>
+                <div class="qa-sub">Moderate content</div>
+              </div>
+            </a>
+            <a class="qa-card" href="admin-reports.html">
+              <div class="qa-icon red">⚑</div>
+              <div>
+                <div class="qa-name">Reports</div>
+                <div class="qa-sub">User flagged issues</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Health -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">SYSTEM HEALTH</span>
+          <span class="panel-action" onclick="refreshHealth()">REFRESH</span>
+        </div>
+        <div class="panel-body">
+          <div class="health-grid" id="health-grid">
+            <div class="health-row">
+              <span class="health-label">Brands Active</span>
+              <div class="health-bar"><div class="health-fill green" id="hbar-active" style="width:0%"></div></div>
+              <span class="health-pct" id="hpct-active">—</span>
+            </div>
+            <div class="health-row">
+              <span class="health-label">Brands Verified</span>
+              <div class="health-bar"><div class="health-fill cyan" id="hbar-verified" style="width:0%"></div></div>
+              <span class="health-pct" id="hpct-verified">—</span>
+            </div>
+            <div class="health-row">
+              <span class="health-label">Slots Filled</span>
+              <div class="health-bar"><div class="health-fill gold" id="hbar-slots" style="width:0%"></div></div>
+              <span class="health-pct" id="hpct-slots">—</span>
+            </div>
+          </div>
+
+          <div style="height: 20px;"></div>
+
+          <!-- Recent Tx summary -->
+          <div class="panel-title" style="margin-bottom: 14px;">RECENT TRANSACTIONS</div>
+          <div id="tx-list" class="log-list">
+            <div class="log-empty">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending verifications + Activity log -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">PENDING VERIFICATIONS</span>
+          <a class="panel-action" href="admin-brands.html">VIEW ALL →</a>
+        </div>
+        <div class="panel-body">
+          <div class="pend-list" id="pend-list">
+            <div class="pend-empty">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">ACTIVITY LOG</span>
+          <a class="panel-action" href="admin-dashboard.html">VIEW ALL →</a>
+        </div>
+        <div class="panel-body">
+          <div class="log-list" id="log-list">
+            <div class="log-empty">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="scripts/firebase-config.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════ */
+const ADMIN_EMAIL = 'johnrufai242@gmail.com'; // ← change if needed
+
+/* ═══════════════════════════════════════════
+   LIVE CLOCK
+═══════════════════════════════════════════ */
+function updateClock() {
+  document.getElementById('live-time').textContent =
+    new Date().toLocaleTimeString('en-GB', { hour12: false });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════════════
+   LOG ADMIN ACTION
+═══════════════════════════════════════════ */
+async function logAdminAction(action, details) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+  await firebase.firestore().collection('adminLog').add({
+    adminId: user.uid, adminEmail: user.email,
+    action, details,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+/* ═══════════════════════════════════════════
+   LOAD DATA
+═══════════════════════════════════════════ */
+async function loadData() {
+  const db = firebase.firestore();
+
+  try {
+    // ── COUNTS ──
+    const [usersCnt, brandsCnt, activeCnt, verifiedCnt, pendingCnt] = await Promise.all([
+      db.collection('users').count().get(),
+      db.collection('brands').count().get(),
+      db.collection('brands').where('activationStatus', '==', 'active').count().get(),
+      db.collection('brands').where('verificationStatus', '==', 'verified').count().get(),
+      db.collection('brands').where('verificationStatus', '==', 'under_review').count().get()
+    ]);
+
+    const totalBrands  = brandsCnt.data().count;
+    const totalActive  = activeCnt.data().count;
+    const totalVerif   = verifiedCnt.data().count;
+    const totalPending = pendingCnt.data().count;
+
+    document.getElementById('stat-users').textContent   = usersCnt.data().count.toLocaleString();
+    document.getElementById('stat-users').classList.remove('loading');
+    document.getElementById('stat-brands').textContent  = totalBrands.toLocaleString();
+    document.getElementById('stat-brands').classList.remove('loading');
+    document.getElementById('stat-brands-sub').textContent = `${totalActive} active · ${totalVerif} verified`;
+    document.getElementById('stat-pending').textContent = totalPending.toLocaleString();
+    document.getElementById('stat-pending').classList.remove('loading');
+
+    // Sidebar badge
+    document.getElementById('sb-pend-count').textContent = totalPending > 0 ? totalPending : '—';
+
+    // Alert banner
+    if (totalPending > 0) {
+      document.getElementById('alert-text').textContent =
+        `${totalPending} brand${totalPending > 1 ? 's' : ''} pending verification review`;
+      document.getElementById('alert-banner').style.display = 'flex';
+    }
+
+    // ── SLOTS ──
+    const worldsSnap = await db.collection('worlds').get();
+    let totalSlots = 0, totalCapacity = 0;
+    worldsSnap.forEach(doc => {
+      totalSlots    += doc.data().occupiedCount || 0;
+      totalCapacity += doc.data().totalSlots    || 100; // assume 100 if not set
+    });
+    document.getElementById('stat-slots').textContent = totalSlots.toLocaleString();
+    document.getElementById('stat-slots').classList.remove('loading');
+
+    // ── HEALTH BARS ──
+    refreshHealth(totalActive, totalBrands, totalVerif, totalBrands, totalSlots, totalCapacity);
+
+    // ── PENDING VERIFICATIONS ──
+    const pendSnap = await db.collection('brands')
+      .where('verificationStatus', '==', 'under_review').limit(5).get();
+    const pendList = document.getElementById('pend-list');
+    pendList.innerHTML = '';
+    if (pendSnap.empty) {
+      pendList.innerHTML = '<div class="pend-empty">✓ No pending verifications</div>';
+    } else {
+      pendSnap.forEach(doc => {
+        const b = doc.data();
+        pendList.innerHTML += `
+          <div class="pend-item">
+            <img class="pend-logo" src="${b.photoURL || ''}"
+              onerror="this.src='https://cdn-icons-png.flaticon.com/512/114/114476.png'">
+            <div class="pend-info">
+              <div class="pend-name">${b.brandName}</div>
+              <div class="pend-meta">${b.category || '—'} · ${b.industry || '—'}</div>
+            </div>
+            <div class="pend-actions">
+              <button class="pend-btn approve" onclick="approveBrand('${doc.id}', '${b.brandName}')">✓</button>
+              <button class="pend-btn reject"  onclick="rejectBrand('${doc.id}',  '${b.brandName}')">✕</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ── RECENT TRANSACTIONS ──
+    const txSnap = await db.collection('transactions')
+      .orderBy('tstamp', 'desc').limit(5).get();
+    const txList = document.getElementById('tx-list');
+    txList.innerHTML = '';
+    if (txSnap.empty) {
+      txList.innerHTML = '<div class="log-empty">No transactions yet</div>';
+    } else {
+      txSnap.forEach(doc => {
+        const t = doc.data();
+        const date = t.tstamp
+          ? (t.tstamp.toDate ? t.tstamp.toDate().toLocaleTimeString() : t.tstamp)
+          : '—';
+        const dot = t.type === 'slot_purchase' ? 'gold' : t.type === 'activation' ? 'cyan' : 'green';
+        txList.innerHTML += `
+          <div class="log-item">
+            <div class="log-dot ${dot}"></div>
+            <div style="flex:1;min-width:0;">
+              <div class="log-action">${(t.type || 'transaction').replace(/_/g,' ')}</div>
+              <div class="log-detail">${t.brandId || t.userId || '—'}</div>
+            </div>
+            <div class="log-time">${date}</div>
+          </div>`;
+      });
+    }
+
+    // ── ACTIVITY LOG ──
+    const logSnap = await db.collection('adminLog')
+      .orderBy('timestamp', 'desc').limit(7).get();
+    const logList = document.getElementById('log-list');
+    logList.innerHTML = '';
+    if (logSnap.empty) {
+      logList.innerHTML = '<div class="log-empty">No activity logged</div>';
+    } else {
+      logSnap.forEach(doc => {
+        const l = doc.data();
+        const date = l.timestamp
+          ? (l.timestamp.toDate ? l.timestamp.toDate().toLocaleTimeString() : '—')
+          : '—';
+        const dotMap = {
+          approve_brand: 'green', reject_brand: 'red',
+          toggle_activation: 'gold', update_user_role: 'cyan'
+        };
+        const dot = dotMap[l.action] || 'cyan';
+        logList.innerHTML += `
+          <div class="log-item">
+            <div class="log-dot ${dot}"></div>
+            <div style="flex:1;min-width:0;">
+              <div class="log-action">${(l.action || '—').replace(/_/g,' ')}</div>
+              <div class="log-detail">${l.adminEmail || l.adminId || '—'}</div>
+            </div>
+            <div class="log-time">${date}</div>
+          </div>`;
+      });
+    }
+
+  } catch (err) {
+    console.error('Data load error:', err);
+    toast('Error loading data — check console');
+  }
+}
+
+function refreshHealth(active, totalB, verified, totalBv, slots, cap) {
+  const pActive   = totalB  > 0 ? Math.round((active  / totalB)  * 100) : 0;
+  const pVerified = totalBv > 0 ? Math.round((verified / totalBv) * 100) : 0;
+  const pSlots    = cap     > 0 ? Math.min(100, Math.round((slots / cap) * 100)) : 0;
+
+  setBar('active',   pActive);
+  setBar('verified', pVerified);
+  setBar('slots',    pSlots);
+}
+
+function setBar(key, pct) {
+  document.getElementById('hbar-' + key).style.width  = pct + '%';
+  document.getElementById('hpct-' + key).textContent  = pct + '%';
+}
+
+async function refreshAll() {
+  toast('Refreshing data…');
+  await loadData();
+}
+
+async function refreshHealth() {
+  toast('Refreshed');
+  await loadData();
+}
+
+/* ═══════════════════════════════════════════
+   BRAND ACTIONS
+═══════════════════════════════════════════ */
+async function approveBrand(brandId, name) {
+  if (!confirm(`Approve verification for "${name}"?`)) return;
+  try {
+    await firebase.firestore().collection('brands').doc(brandId).update({
+      verificationStatus: 'verified',
+      verifiedBadge: true,
+      verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await logAdminAction('approve_brand', { brandId, name });
+    toast(`✓ ${name} approved`);
+    await loadData();
+  } catch (e) {
+    console.error(e);
+    toast('Failed to approve');
+  }
+}
+
+async function rejectBrand(brandId, name) {
+  if (!confirm(`Reject verification for "${name}"?`)) return;
+  try {
+    await firebase.firestore().collection('brands').doc(brandId).update({
+      verificationStatus: 'unverified',
+      verificationRequested: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await logAdminAction('reject_brand', { brandId, name });
+    toast(`✕ ${name} rejected`);
+    await loadData();
+  } catch (e) {
+    console.error(e);
+    toast('Failed to reject');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   AUTH GUARD
+═══════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  const unsub = firebase.auth().onAuthStateChanged(async user => {
+    unsub();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    // Admin check — email OR Firestore role
+    let isAdmin = user.email === ADMIN_EMAIL;
+    if (!isAdmin) {
+      try {
+        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().role === 'admin') isAdmin = true;
+      } catch (e) { /* ignore */ }
+    }
+
+    if (!isAdmin) {
+      alert('Access denied. Admin only.');
+      firebase.auth().signOut().finally(() => { window.location.href = 'index.html'; });
+      return;
+    }
+
+    // Populate profile
+    let photoURL = user.photoURL || '';
+    let name     = user.displayName || 'Admin';
+    let handle   = '@' + (user.email?.split('@')[0] || 'admin');
+    try {
+      const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        const d = doc.data();
+        photoURL = d.photoURL || photoURL;
+        name     = d.username || d.fullName || name;
+        handle   = '@' + (d.username || d.email?.split('@')[0] || 'admin');
+      }
+    } catch (e) { /* use auth defaults */ }
+
+    document.getElementById('admin-avatar').src   = photoURL || 'https://via.placeholder.com/32';
+    document.getElementById('admin-name').textContent  = name.toUpperCase().slice(0, 14);
+    document.getElementById('admin-handle').textContent = `// ${handle} · SYSTEM OPERATOR`;
+
+    // Load data
+    await loadData();
+
+    // Hide loader
+    document.getElementById('loading-screen').classList.add('done');
+  });
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await firebase.auth().signOut();
+  window.location.href = 'index.html';
+});
+</script>
+</body>
+</html>

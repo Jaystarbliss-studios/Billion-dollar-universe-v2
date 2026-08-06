@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billion Dollar ecosystem - Brand Democracy Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:       #0A0A0A;
+            --bg2:      #111111;
+            --text:     #F5F5F5;
+            --muted:    #B8B8B8;
+            --gold:     #C6A75E;
+            --gold2:    #D4B96E;
+            --gold-glow:rgba(198,167,94,0.35);
+            --gold-dim: rgba(198,167,94,0.12);
+            --div:      rgba(255,255,255,0.08);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.6; overflow-x: hidden;
+        }
+
+        #hex-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+        /* ── LOADER ── */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 1; transition: opacity 0.6s ease;
+        }
+        #loader.fade-out { opacity: 0; pointer-events: none; }
+        .loader-inner { text-align: center; }
+        .loader-logo {
+            font-family: 'Crimson Pro', serif; font-size: clamp(26px, 6vw, 50px);
+            font-weight: 700; color: var(--text); letter-spacing: 0.01em;
+            animation: fadeInScale 1s ease-out;
+        }
+        .loader-gold { color: var(--gold); }
+        .loader-bar {
+            width: 160px; height: 1px; background: rgba(198,167,94,0.15);
+            margin: 18px auto 0; position: relative; overflow: hidden;
+        }
+        .loader-bar::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            animation: loaderScan 1.6s ease-in-out forwards;
+        }
+        @keyframes fadeInScale { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+        @keyframes loaderScan  { from{left:-100%} to{left:100%} }
+
+        /* ── POPUP-BLOCKED BANNER ── */
+        #popup-banner {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+            background: linear-gradient(135deg, #1e1000, #2e1a00);
+            border-bottom: 2px solid rgba(198,167,94,0.5);
+            padding: 16px 20px;
+            display: none;
+            align-items: flex-start; gap: 14px;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.85);
+            animation: bannerDrop 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        #popup-banner.visible { display: flex; }
+        @keyframes bannerDrop { from{transform:translateY(-110%)} to{transform:translateY(0)} }
+
+        .pb-lock { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
+        .pb-body { flex: 1; min-width: 0; }
+        .pb-title {
+            font-family: 'Crimson Pro', serif; font-size: 17px; font-weight: 700;
+            color: var(--gold); margin-bottom: 5px;
+        }
+        .pb-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 6px; }
+        .pb-tip {
+            display: flex; align-items: flex-start; gap: 8px;
+            background: rgba(198,167,94,0.07); border: 1px solid rgba(198,167,94,0.2);
+            border-radius: 6px; padding: 9px 12px; margin-top: 8px;
+        }
+        .pb-tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+        .pb-tip-text { font-size: 12px; color: rgba(198,167,94,0.75); line-height: 1.55; }
+        .pb-tip-text strong { color: var(--gold); }
+        .pb-actions {
+            display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0; align-self: flex-start; margin-top: 4px;
+        }
+        .pb-retry {
+            padding: 10px 20px; background: var(--gold); color: #0A0A0A;
+            border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            white-space: nowrap; transition: all 0.22s ease;
+        }
+        .pb-retry:hover { background: var(--gold2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(198,167,94,0.4); }
+        .pb-close {
+            width: 32px; height: 32px; background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: rgba(255,255,255,0.4); font-size: 16px;
+            transition: all 0.2s; flex-shrink: 0; user-select: none;
+        }
+        .pb-close:hover { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.3); color: #FF8080; }
+
+        /* ── AUTH PROGRESS OVERLAY ── */
+        #auth-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,10,0.96); backdrop-filter: blur(20px);
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 8000; gap: 20px; animation: aoFade 0.3s ease;
+        }
+        #auth-overlay.active { display: flex; }
+        @keyframes aoFade { from{opacity:0} to{opacity:1} }
+        .ao-ring {
+            width: 48px; height: 48px; border-radius: 50%;
+            border: 2px solid rgba(198,167,94,0.2); border-top-color: var(--gold);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        .ao-label {
+            font-family: 'Orbitron', monospace; font-size: 11px;
+            letter-spacing: 3px; color: rgba(198,167,94,0.7); text-transform: uppercase;
+        }
+        .ao-sub { font-size: 13px; color: var(--muted); margin-top: -8px; text-align: center; max-width: 260px; line-height: 1.5; }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 32px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(20,10,10,0.95); border: 1px solid rgba(255,80,80,0.35);
+            backdrop-filter: blur(16px); color: #FF8080; font-size: 14px; font-weight: 500;
+            padding: 13px 22px; border-radius: 8px; z-index: 9000; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            text-align: center; max-width: 90vw;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 800;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 36px;
+            background: rgba(10,10,10,0.85); backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(198,167,94,0.1);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'Crimson Pro', serif; font-size: 20px; font-weight: 700;
+            color: var(--gold); letter-spacing: 0.02em; text-transform: uppercase;
+        }
+        .nav-brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .nav-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-nav {
+            font-size: 14px; font-weight: 500; padding: 9px 22px;
+            border-radius: 6px; cursor: pointer; transition: all 0.25s ease;
+            border: 1.5px solid transparent;
+        }
+        .btn-nav-outline { background: transparent; border-color: rgba(198,167,94,0.45); color: var(--gold); }
+        .btn-nav-outline:hover { background: var(--gold-dim); border-color: var(--gold); box-shadow: 0 0 18px var(--gold-glow); }
+        .btn-nav-solid { background: var(--gold); color: #0A0A0A; border-color: var(--gold); }
+        .btn-nav-solid:hover { background: var(--gold2); box-shadow: 0 0 22px var(--gold-glow); }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .hero-video-container { position: absolute; inset: 0; }
+        .hero-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.22; }
+        .hero-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(10,10,10,0.3) 0%, rgba(140,115,20,0.08) 50%, rgba(10,10,10,0.4) 100%);
+        }
+        .hero::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 220px;
+            background: linear-gradient(to bottom, transparent, var(--bg)); pointer-events: none; z-index: 1;
+        }
+        .hero-content {
+            position: relative; z-index: 2; text-align: center; max-width: 900px;
+            padding: 100px 20px 60px; /* top padding clears navbar, bottom gives room */
+            animation: heroFadeIn 1.4s ease-out 0.4s both;
+            width: 100%;
+        }
+        @keyframes heroFadeIn { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+        .hero h1 {
+            font-family: 'Crimson Pro', serif; font-size: clamp(36px, 6vw, 72px);
+            font-weight: 700; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.02em;
+        }
+        .hero p {
+            font-size: clamp(16px, 2.2vw, 21px); color: var(--muted);
+            max-width: 540px; margin: 0 auto 44px; line-height: 1.65;
+        }
+
+        /* ── HERO AUTH ── */
+        .hero-auth {
+            display: flex; flex-direction: column; align-items: center; gap: 0;
+            width: 100%; max-width: 480px; margin: 0 auto;
+        }
+
+        /* ── LOGIN ROW — the two "Login as…" buttons ── */
+        .login-section {
+            width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;
+            padding-bottom: 20px; /* space before divider */
+        }
+        .login-row {
+            display: flex; gap: 12px; flex-wrap: nowrap;
+            justify-content: center; width: 100%;
+        }
+
+        .btn-login {
+            display: flex; align-items: center; gap: 10px; padding: 14px 24px;
+            border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 500;
+            transition: all 0.28s ease; border: none; position: relative; overflow: hidden;
+            flex: 1; justify-content: center; min-width: 0;
+        }
+        .btn-login-brand { background: var(--gold); color: #0A0A0A; }
+        .btn-login-brand:hover { background: var(--gold2); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(198,167,94,0.38); }
+        .btn-login-user { background: transparent; color: var(--gold); border: 1.5px solid rgba(198,167,94,0.55); }
+        .btn-login-user:hover { background: var(--gold-dim); border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(198,167,94,0.2); }
+        .btn-login .g-icon { width: 18px; height: 18px; flex-shrink: 0; }
+        .btn-login .spinner {
+            display: none; width: 16px; height: 16px; border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.2); border-top-color: #0A0A0A;
+            animation: spin 0.8s linear infinite;
+        }
+        .btn-login-user .spinner { border-color: rgba(198,167,94,0.25); border-top-color: var(--gold); }
+        .btn-login.loading .btn-text { display: none; }
+        .btn-login.loading .g-icon  { display: none; }
+        .btn-login.loading .spinner { display: block; }
+
+        /* ── DIVIDER ── */
+        .auth-divider {
+            display: flex; align-items: center; gap: 14px;
+            width: 100%; color: var(--muted); font-size: 13px;
+            padding: 4px 0 20px;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--div);
+        }
+
+        /* ── SIGNUP PANEL ── */
+        .signup-panel-wrap {
+            width: 100%; overflow: hidden; max-height: 0;
+            transition: max-height 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease;
+            opacity: 0;
+        }
+        .signup-panel-wrap.open { max-height: 480px; opacity: 1; }
+
+        .signup-panel {
+            background: rgba(17,17,17,0.92); backdrop-filter: blur(20px);
+            border: 1px solid rgba(198,167,94,0.2); border-radius: 12px;
+            padding: 28px 24px 24px; position: relative;
+            margin-bottom: 16px; /* gap between panel and the hero-subtext below */
+        }
+        .signup-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+        .signup-panel-tag {
+            font-family: 'Orbitron', monospace; font-size: 7.5px; letter-spacing: 3px;
+            color: rgba(198,167,94,0.5); text-transform: uppercase; margin-bottom: 10px;
+        }
+        .signup-panel h4 { font-family: 'Crimson Pro', serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .signup-panel > .signup-panel-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+        .signup-cards {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;
+        }
+        .signup-card {
+            border: 1px solid rgba(198,167,94,0.18); border-radius: 8px; padding: 18px 14px;
+            cursor: pointer; background: rgba(198,167,94,0.03); text-align: center;
+            transition: all 0.25s ease;
+        }
+        .signup-card:hover { background: rgba(198,167,94,0.09); border-color: rgba(198,167,94,0.5); transform: translateY(-2px); box-shadow: 0 0 20px rgba(198,167,94,0.1); }
+        .signup-card.loading { pointer-events: none; opacity: 0.65; }
+        .signup-card-icon { font-size: 26px; margin-bottom: 8px; }
+        .signup-card-title { font-family: 'Crimson Pro', serif; font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+        .signup-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+        .signup-card-google {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            margin-top: 10px; font-size: 11px; color: rgba(198,167,94,0.6); font-weight: 500;
+        }
+        .signup-card-google svg { width: 13px; height: 13px; }
+        .signup-panel-foot { text-align: center; font-size: 13px; color: var(--muted); }
+        .signup-panel-foot a { color: var(--gold); cursor: pointer; text-decoration: none; font-weight: 500; }
+        .signup-panel-foot a:hover { text-decoration: underline; }
+
+        /* ── HERO SUBTEXT (Not a member? sign up) ── */
+        .hero-subtext {
+            font-size: 14px; color: var(--muted);
+            padding-top: 4px;
+        }
+        .hero-subtext a {
+            color: var(--gold); text-decoration: none; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; background: none; border: none; font-size: 14px; font-family: inherit;
+        }
+        .hero-subtext a:hover { text-shadow: 0 0 14px var(--gold-glow); }
+
+        /* ── SECTIONS ── */
+        .section { padding: 120px 24px; position: relative; z-index: 1; }
+        .section-alt { background: rgba(17,17,17,0.95); }
+        .section-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        .section-content h2 {
+            font-family: 'Crimson Pro', serif; font-size: clamp(36px, 5vw, 56px);
+            font-weight: 700; margin-bottom: 32px; line-height: 1.2; letter-spacing: -0.02em;
+        }
+        .section-features { list-style: none; margin-bottom: 40px; }
+        .section-features li {
+            padding: 15px 0; border-bottom: 1px solid var(--div);
+            font-size: 18px; color: var(--muted); display: flex; align-items: center; gap: 16px; transition: all 0.3s ease;
+        }
+        .section-features li:hover { color: var(--text); padding-left: 8px; }
+        .section-features li::before { content: "→"; color: var(--gold); font-size: 20px; font-weight: 700; flex-shrink: 0; transition: transform 0.3s ease; }
+        .section-features li:hover::before { transform: translateX(4px); }
+        .section-visualb {
+            background: url("assets/images/brand card.png") center center / cover no-repeat, linear-gradient(135deg, rgba(198,167,94,0.05), rgba(198,167,94,0.02));
+            border: 1px solid var(--div); border-radius: 8px; height: 450px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+        }
+        .section-visualu {
+            background: url("assets/images/user nodes.png") center center / cover no-repeat, linear-gradient(135deg, rgba(198,167,94,0.05), rgba(198,167,94,0.02));
+            border: 1px solid var(--div); border-radius: 8px; height: 450px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+        }
+        .section-visualb::before, .section-visualu::before {
+            content: ''; position: absolute; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(198,167,94,0.15) 0%, transparent 70%);
+            animation: radPulse 4s ease-in-out infinite;
+        }
+        @keyframes radPulse { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.2);opacity:.2} }
+        .visual-placeholder { font-size: 64px; color: var(--gold); opacity: 0.3; z-index: 1; }
+        .btn { padding: 15px 38px; font-size: 15px; font-weight: 500; border: none; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; text-decoration: none; display: inline-block; letter-spacing: 0.02em; }
+        .btn-primary { background: var(--gold); color: #0A0A0A; }
+        .btn-primary:hover { background: var(--gold2); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(198,167,94,0.38); }
+
+        /* ── FOOTER ── */
+        footer { padding: 80px 24px; border-top: 1px solid var(--div); text-align: center; position: relative; z-index: 1; }
+        .footer-links { display: flex; justify-content: center; gap: 40px; margin-bottom: 32px; flex-wrap: wrap; }
+        .footer-links a { color: var(--muted); text-decoration: none; font-size: 16px; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--gold); }
+        .copyright { color: var(--muted); font-size: 14px; line-height: 1.8; }
+
+        /* ── SCROLL REVEAL ── */
+        .reveal { opacity: 0; transform: translateY(48px); transition: opacity 0.85s ease, transform 0.85s ease; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE — TABLET  (max 768px)
+        ═══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .hero-content { padding: 90px 16px 50px; }
+            .hero-auth { max-width: 100%; padding: 0; }
+
+            /* Login buttons side-by-side but smaller */
+            .login-row { gap: 10px; }
+            .btn-login { padding: 13px 16px; font-size: 14px; }
+            .btn-login .g-icon { width: 16px; height: 16px; }
+
+            /* Signup panel full width */
+            .signup-panel { padding: 22px 18px 20px; }
+            .signup-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE — MOBILE  (max 520px)
+        ═══════════════════════════════════════════ */
+        @media (max-width: 520px) {
+            .hero-content { padding: 80px 14px 48px; }
+
+            /* LOGIN BUTTONS: stack vertically, full width */
+            .login-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .btn-login {
+                width: 100%;
+                padding: 15px 20px;
+                font-size: 15px;
+                justify-content: center;
+            }
+
+            /* Clear divider spacing */
+            .auth-divider { padding: 8px 0 16px; font-size: 12px; }
+
+            /* Signup cards: single column */
+            .signup-cards { grid-template-columns: 1fr; gap: 10px; }
+            .signup-panel { padding: 20px 16px 18px; }
+            .signup-panel h4 { font-size: 20px; }
+            .signup-card { padding: 16px 12px; }
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE — SECTIONS / FOOTER (shared)
+        ═══════════════════════════════════════════ */
+        @media (max-width: 968px) {
+            .section-container { grid-template-columns: 1fr; gap: 48px; }
+            .section { padding: 80px 24px; }
+            .section-visualb, .section-visualu { height: 300px; }
+        }
+        @media (max-width: 640px) {
+            .footer-links { gap: 24px; }
+
+            /* Navbar compact */
+            .navbar { padding: 0 16px; gap: 8px; }
+            .nav-logo { width: 28px; height: 28px; }
+            .nav-brand { font-size: 14px; gap: 6px; }
+            .btn-nav { padding: 7px 14px; font-size: 13px; }
+            .nav-brand span { display: none; }
+
+            /* Banner mobile: stack vertically */
+            #popup-banner { flex-wrap: wrap; padding: 14px 16px; }
+            .pb-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="hex-canvas"></canvas>
+
+<!-- Loader -->
+<div id="loader">
+    <div class="loader-inner">
+        <img src="assets/images/logo.png" alt="Billion Dollar ecosystem logo" style="width:clamp(180px,40vw,340px);height:auto;margin-bottom:32px;filter:drop-shadow(0 0 40px rgba(198,167,94,0.4));">
+        <div class="loader-logo">The Billion <span class="loader-gold">Dollar</span> ecosystem</div>
+        <div class="loader-bar"></div>
+    </div>
+</div>
+
+<div id="popup-banner">
+    <div class="pb-lock">🔒</div>
+    <div class="pb-body">
+        <div class="pb-title">Pop-up blocked — allow it to sign in with Google</div>
+        <div class="pb-desc">
+            Google sign-in opens in a secure pop-up window. Your browser blocked it this time.
+            Allow pop-ups for this site, then tap <strong style="color:var(--gold)">Try Again</strong>.
+        </div>
+        <div class="pb-tip">
+            <span class="pb-tip-icon">💡</span>
+            <span class="pb-tip-text">
+                <strong>How to allow it:</strong> Look for a blocked pop-up icon
+                in your browser's address bar or menu → tap it →
+                select <strong>"Always allow pop-ups from this site"</strong> → tap Try Again below.
+            </span>
+        </div>
+    </div>
+    <div class="pb-actions">
+        <button class="pb-retry" id="pbRetryBtn">Try Again →</button>
+        <div class="pb-close" id="pbCloseBtn" role="button" aria-label="Dismiss">✕</div>
+    </div>
+</div>
+
+<div id="auth-overlay">
+    <div class="ao-ring"></div>
+    <div class="ao-label" id="ao-label">Signing you in…</div>
+    <div class="ao-sub" id="ao-sub">Connecting to Google…</div>
+</div>
+
+<div id="toast" role="alert"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="nav-brand">
+        <img src="assets/images/logo.png" alt="Logo" class="nav-logo">
+        <span>Billion Dollar ecosystem</span>
+    </div>
+    <div class="nav-actions">
+        <button class="btn-nav btn-nav-outline" id="navLoginBtn">Log in</button>
+        <button class="btn-nav btn-nav-solid"   id="navSignupBtn">Sign Up</button>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-video-container">
+        <video class="hero-video" autoplay muted loop playsinline preload="none">
+            <source src="assets/videos/life2.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+        <h1>Own a slice of the<br>Billion Dollar ecosystem!</h1>
+        <p>A live brand democracy platform powered by influence, momentum, and visibility.</p>
+
+        <div class="hero-auth">
+
+            <!-- ① LOGIN BUTTONS — always visible, clearly separated -->
+            <div class="login-section">
+                <div class="login-row">
+                    <button class="btn-login btn-login-brand" id="btnLoginBrand">
+                        <svg class="g-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        <span class="btn-text">Login as Brand</span>
+                        <div class="spinner"></div>
+                    </button>
+                    <button class="btn-login btn-login-user" id="btnLoginUser">
+                        <svg class="g-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        <span class="btn-text">Login as User</span>
+                        <div class="spinner"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ② DIVIDER -->
+            <div class="auth-divider">or create a new account</div>
+
+            <!-- ③ SIGNUP PANEL — hidden by default, slides open on tap -->
+            <div class="signup-panel-wrap" id="signupPanelWrap">
+                <div class="signup-panel">
+                    <div class="signup-panel-tag">// Create Account</div>
+                    <h4>Join the ecosystem</h4>
+                    <p class="signup-panel-sub">Choose how you'd like to participate, then sign in with Google instantly.</p>
+                    <div class="signup-cards">
+                        <div class="signup-card" id="signupAsBrand">
+                            <div class="signup-card-icon">⬡</div>
+                            <div class="signup-card-title">As a Brand</div>
+                            <div class="signup-card-desc">Compete for visibility &amp; rankings</div>
+                            <div class="signup-card-google">
+                                <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                Continue with Google
+                            </div>
+                        </div>
+                        <div class="signup-card" id="signupAsUser">
+                            <div class="signup-card-icon">◈</div>
+                            <div class="signup-card-title">As a User</div>
+                            <div class="signup-card-desc">Support brands &amp; earn influence</div>
+                            <div class="signup-card-google">
+                                <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                Continue with Google
+                            </div>
+                        </div>
+                    </div>
+                    <div class="signup-panel-foot">Already a member? <a id="panelLoginLink">Log in above ↑</a></div>
+                </div>
+            </div>
+
+            <!-- ④ HERO SUBTEXT — toggles the panel open -->
+            <div class="hero-subtext" id="heroSubtext">
+                Not a member? <a id="heroSignupLink">Sign up free</a>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Brand Section -->
+<section class="section section-alt reveal">
+    <div class="section-container">
+        <div class="section-content">
+            <h2>Compete. Rise. Dominate.</h2>
+            <ul class="section-features">
+                <li>Gain real-time visibility</li>
+                <li>Compete on live leaderboards</li>
+                <li>Earn platform titles</li>
+                <li>Engage real communities</li>
+            </ul>
+            <button class="btn btn-primary" id="sectionSignupBrand">Register Your Brand</button>
+        </div>
+        <div class="section-visualb"><div class="visual-placeholder"></div></div>
+    </div>
+</section>
+
+<!-- User Section -->
+<section class="section reveal">
+    <div class="section-container">
+        <div class="section-visualu"><div class="visual-placeholder"></div></div>
+        <div class="section-content">
+            <h2>Support. Influence. Decide.</h2>
+            <ul class="section-features">
+                <li>Boost your favorite brands</li>
+                <li>Earn influence power</li>
+                <li>Climb social ranks</li>
+                <li>Shape the ecosystem</li>
+            </ul>
+            <button class="btn btn-primary" id="sectionSignupUser">Join as User</button>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-links">
+        <a href="#">About</a>
+        <a href="#">Terms</a>
+        <a href="#">Contact</a>
+    </div>
+    <div class="copyright">
+        &copy; 2026 Billion Dollar Ecosystem. All rights reserved.<br>
+    </div>
+</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="scripts/firebase-config.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════
+   HEX GRID BACKGROUND
+════════════════════════════════════════════════════ */
+(function () {
+    const canvas = document.getElementById('hex-canvas');
+    const ctx    = canvas.getContext('2d');
+    const HEX_R = 48, EDGE_ALPHA = 0.17, EDGE_COLOR = '198,167,94';
+    const PULSE_COUNT = 5, PULSE_SPEED = 5.0;
+    let W, H, edges, adjMap, raf, pulses = [];
+
+    function hexVerts(cx, cy, r) {
+        const p = [];
+        for (let i = 0; i < 6; i++) {
+            const a = (Math.PI / 180) * (60 * i);
+            p.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+        }
+        return p;
+    }
+    function buildGrid(r) {
+        const cw = r * 2, rh = r * Math.sqrt(3);
+        const cols = Math.ceil(W / (cw * 0.75)) + 3;
+        const rows = Math.ceil(H / rh) + 3;
+        const out = [];
+        for (let row = -1; row < rows; row++)
+            for (let col = -1; col < cols; col++)
+                out.push({ x: col * cw * 0.75, y: row * rh + (col % 2 !== 0 ? rh * 0.5 : 0) });
+        return out;
+    }
+    function buildEdges(centres, r) {
+        const seen = new Set(), el = [], adj = new Map();
+        const key = (a, b) => {
+            const [x1,y1,x2,y2] = a.x < b.x || (a.x===b.x && a.y<b.y) ? [a.x,a.y,b.x,b.y] : [b.x,b.y,a.x,a.y];
+            return `${Math.round(x1)},${Math.round(y1)},${Math.round(x2)},${Math.round(y2)}`;
+        };
+        const vk = v => `${Math.round(v.x)},${Math.round(v.y)}`;
+        centres.forEach(c => {
+            hexVerts(c.x, c.y, r).forEach((a, i, verts) => {
+                const b = verts[(i+1)%6], k = key(a,b);
+                if (!seen.has(k)) {
+                    seen.add(k);
+                    const idx = el.length;
+                    el.push({ ax:a.x, ay:a.y, bx:b.x, by:b.y, len:Math.hypot(b.x-a.x,b.y-a.y) });
+                    [a,b].forEach(v => { const vkk=vk(v); if(!adj.has(vkk)) adj.set(vkk,[]); adj.get(vkk).push(idx); });
+                }
+            });
+        });
+        return { el, adj };
+    }
+    function makePulse() {
+        const e = edges[Math.floor(Math.random()*edges.length)];
+        return { edgeIdx:edges.indexOf(e), t:0, forward:Math.random()<0.5, speed:PULSE_SPEED*(0.7+Math.random()*0.6), trail:[] };
+    }
+    function advance(p) {
+        const e = edges[p.edgeIdx];
+        p.t += p.speed / e.len;
+        if (p.t >= 1) {
+            const vk = p.forward ? `${Math.round(e.bx)},${Math.round(e.by)}` : `${Math.round(e.ax)},${Math.round(e.ay)}`;
+            const opts = (adjMap.get(vk)||[]).filter(i=>i!==p.edgeIdx);
+            if (!opts.length) { Object.assign(p, makePulse()); return; }
+            const ni = opts[Math.floor(Math.random()*opts.length)], ne = edges[ni];
+            const atB = Math.round(ne.bx)===Math.round(p.forward?e.bx:e.ax) && Math.round(ne.by)===Math.round(p.forward?e.by:e.ay);
+            p.edgeIdx=ni; p.forward=!atB; p.t=0;
+        }
+    }
+    function pos(p) {
+        const e=edges[p.edgeIdx], t=p.forward?p.t:1-p.t;
+        return { x:e.ax+(e.bx-e.ax)*t, y:e.ay+(e.by-e.ay)*t };
+    }
+    function draw() {
+        ctx.clearRect(0,0,W,H);
+        ctx.lineWidth=0.8; ctx.strokeStyle=`rgba(${EDGE_COLOR},${EDGE_ALPHA})`;
+        const m=HEX_R*2;
+        edges.forEach(e=>{
+            if(e.ax<-m&&e.bx<-m||e.ay<-m&&e.by<-m||e.ax>W+m&&e.bx>W+m||e.ay>H+m&&e.by>H+m) return;
+            ctx.beginPath(); ctx.moveTo(e.ax,e.ay); ctx.lineTo(e.bx,e.by); ctx.stroke();
+        });
+        pulses.forEach(p=>{
+            const {x,y} = pos(p);
+            p.trail.push({x,y});
+            if (p.trail.length > 50) p.trail.shift();
+            p.trail.forEach((pt, i) => {
+                const frac=i/p.trail.length, alpha=frac*frac*0.9, size=frac*3.2;
+                ctx.beginPath(); ctx.arc(pt.x,pt.y,Math.max(size,0.3),0,Math.PI*2);
+                ctx.fillStyle=`rgba(255,215,90,${alpha})`; ctx.fill();
+            });
+            ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+            ctx.fillStyle='rgba(255,235,150,1)'; ctx.fill();
+            const glow=ctx.createRadialGradient(x,y,0,x,y,12);
+            glow.addColorStop(0,'rgba(255,210,100,0.6)'); glow.addColorStop(1,'rgba(255,210,100,0)');
+            ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fillStyle=glow; ctx.fill();
+        });
+        pulses.forEach(advance);
+        raf=requestAnimationFrame(draw);
+    }
+    function init() {
+        W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
+        const {el,adj}=buildEdges(buildGrid(HEX_R),HEX_R);
+        edges=el; adjMap=adj;
+        pulses=Array.from({length:PULSE_COUNT},makePulse);
+        cancelAnimationFrame(raf); draw();
+    }
+    window.addEventListener('resize',()=>{cancelAnimationFrame(raf);init();});
+    init();
+})();
+
+/* ════════════════════════════════════════════════════
+   LOADER
+════════════════════════════════════════════════════ */
+setTimeout(function() {
+    var l = document.getElementById('loader');
+    if (!l) return;
+    l.classList.add('fade-out');
+    setTimeout(function(){ l.style.display='none'; }, 600);
+}, 1800);
+
+/* ════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════ */
+var toastTimer;
+function showToast(msg, duration) {
+    duration = duration || 4500;
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, duration);
+}
+
+/* ════════════════════════════════════════════════════
+   AUTH OVERLAY
+════════════════════════════════════════════════════ */
+function showAuthOverlay(label, sub) {
+    document.getElementById('ao-label').textContent = label || 'Signing you in…';
+    document.getElementById('ao-sub').textContent   = sub   || 'Connecting to Google…';
+    document.getElementById('auth-overlay').classList.add('active');
+}
+function hideAuthOverlay() {
+    document.getElementById('auth-overlay').classList.remove('active');
+}
+
+/* ════════════════════════════════════════════════════
+   SIGNUP PANEL TOGGLE
+════════════════════════════════════════════════════ */
+var signupOpen = false;
+function openSignupPanel() {
+    signupOpen = true;
+    document.getElementById('signupPanelWrap').classList.add('open');
+    document.getElementById('heroSubtext').style.display = 'none';
+    // Scroll the panel into view smoothly on mobile
+    setTimeout(function(){
+        document.getElementById('signupPanelWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+}
+function closeSignupPanel() {
+    signupOpen = false;
+    document.getElementById('signupPanelWrap').classList.remove('open');
+    document.getElementById('heroSubtext').style.display = '';
+}
+document.getElementById('heroSignupLink').addEventListener('click',  function(){ signupOpen ? closeSignupPanel() : openSignupPanel(); });
+document.getElementById('navSignupBtn').addEventListener('click',    function(){ openSignupPanel(); window.scrollTo({top:0,behavior:'smooth'}); });
+document.getElementById('navLoginBtn').addEventListener('click',     function(){ closeSignupPanel(); window.scrollTo({top:0,behavior:'smooth'}); });
+document.getElementById('panelLoginLink').addEventListener('click',  function(){ closeSignupPanel(); });
+document.getElementById('sectionSignupBrand').addEventListener('click', function(){ openSignupPanel(); document.getElementById('signupPanelWrap').scrollIntoView({behavior:'smooth',block:'center'}); });
+document.getElementById('sectionSignupUser').addEventListener('click',  function(){ openSignupPanel(); document.getElementById('signupPanelWrap').scrollIntoView({behavior:'smooth',block:'center'}); });
+
+/* ════════════════════════════════════════════════════
+   FIREBASE AUTH
+════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof firebase === 'undefined') {
+        console.warn('Firebase not loaded — check firebase-config.js');
+        return;
+    }
+
+    var db = firebase.firestore();
+    var _pendingFlow = null;
+    var _pendingBtn  = null;
+
+    var banner = document.getElementById('popup-banner');
+
+    function showPopupBanner() {
+        banner.classList.add('visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function hidePopupBanner() {
+        banner.classList.remove('visible');
+    }
+
+    document.getElementById('pbCloseBtn').addEventListener('click', hidePopupBanner);
+    document.getElementById('pbRetryBtn').addEventListener('click', function() {
+        hidePopupBanner();
+        setTimeout(function() {
+            if (_pendingFlow) startAuth(_pendingFlow, _pendingBtn);
+        }, 350);
+    });
+
+ async function routeUser(user, flow) {
+
+        // ── ADMIN CHECK ────────────────────────────────────────
+        const ADMIN_EMAIL = 'johnrufai242@gmail.com';
+        let isAdmin = user.email === ADMIN_EMAIL;
+
+        if (!isAdmin) {
+            try {
+                const uDoc = await db.collection('users').doc(user.uid).get();
+                if (uDoc.exists && uDoc.data().role === 'admin') isAdmin = true;
+            } catch (e) { /* ignore, fall through */ }
+        }
+
+        if (isAdmin) {
+            window.location.href = 'admin-home.html';
+            return;
+        }
+        // ── END ADMIN CHECK ────────────────────────────────────
+
+        try {
+            if (flow === 'login-brand') {
+                showAuthOverlay('Checking brand account…', 'Verifying your registration');
+                var snap = await db.collection('brands').doc(user.uid).get();
+                if (!snap.exists) {
+                    await firebase.auth().signOut(); hideAuthOverlay();
+                    showToast('No brand account found for this Google account. Please sign up first.');
+                    return;
+                }
+                window.location.href = 'brand-dashboard.html';
+
+            } else if (flow === 'login-user') {
+                showAuthOverlay('Checking user account…', 'Verifying your registration');
+                var snap = await db.collection('users').doc(user.uid).get();
+                if (!snap.exists) {
+                    await firebase.auth().signOut(); hideAuthOverlay();
+                    showToast('No user account found for this Google account. Please sign up first.');
+                    return;
+                }
+                window.location.href = 'user-dashboard.html';
+
+            } else if (flow === 'signup-brand') {
+                showAuthOverlay('Setting up your brand…', 'Almost there!');
+                var snap = await db.collection('brands').doc(user.uid).get();
+                window.location.href = snap.exists ? 'brand-dashboard.html' : 'brand-onboarding.html';
+
+            } else if (flow === 'signup-user') {
+                showAuthOverlay('Creating your account…', 'Almost there!');
+                var snap = await db.collection('users').doc(user.uid).get();
+                window.location.href = snap.exists ? 'user-dashboard.html' : 'user-onboarding.html';
+            }
+        } catch (err) {
+            console.error('routeUser error:', err);
+            hideAuthOverlay();
+            showToast('Something went wrong: ' + (err.message || err.code));
+        }
+    }
+
+    async function startAuth(flow, btn) {
+        _pendingFlow = flow;
+        _pendingBtn  = btn;
+
+        var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+        showAuthOverlay('Opening Google sign-in…', 'Complete sign-in in the pop-up window');
+
+        try {
+            var result = await firebase.auth().signInWithPopup(provider);
+            hidePopupBanner();
+            await routeUser(result.user, flow);
+
+        } catch (err) {
+            hideAuthOverlay();
+            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+
+            switch (err.code) {
+                case 'auth/popup-blocked':
+                    showPopupBanner();
+                    break;
+                case 'auth/popup-closed-by-user':
+                case 'auth/cancelled-popup-request':
+                    break;
+                case 'auth/operation-not-allowed':
+                    showToast('Google sign-in is not enabled for this app. Please contact support.');
+                    break;
+                case 'auth/network-request-failed':
+                    showToast('Network error — please check your connection and try again.');
+                    break;
+                default:
+                    showToast('Sign-in failed: ' + (err.message || err.code));
+            }
+        }
+    }
+
+    document.getElementById('btnLoginBrand').addEventListener('click', function(){ startAuth('login-brand', this); });
+    document.getElementById('btnLoginUser').addEventListener('click',  function(){ startAuth('login-user',  this); });
+
+    document.getElementById('signupAsBrand').addEventListener('click', function(){
+        this.classList.add('loading');
+        startAuth('signup-brand', null);
+    });
+    document.getElementById('signupAsUser').addEventListener('click', function(){
+        this.classList.add('loading');
+        startAuth('signup-user', null);
+    });
+});
+
+/* ════════════════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════════════════ */
+function scrollReveal() {
+    document.querySelectorAll('.reveal').forEach(function(el) {
+        if (el.getBoundingClientRect().top < window.innerHeight - 80)
+            el.classList.add('active');
+    });
+}
+window.addEventListener('scroll', scrollReveal);
+setTimeout(scrollReveal, 150);
+</script>
+</body>
+</html>

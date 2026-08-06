@@ -1,0 +1,120 @@
+/**
+ * styles.css — Global styles for Brand Universe Next
+ * HUD overlays, panels, tooltips, animations
+ */
+
+:root {
+    --gold:     #C6A85E;
+    --gold-glow: rgba(198,168,94,0.35);
+    --cyan:     #4ECAFF;
+    --green:    #00F5A0;
+    --panel:    rgba(4,10,22,0.92);
+    --edge:     rgba(78,202,255,0.15);
+    --font-hud: 'Orbitron', monospace;
+    --font-body: 'Rajdhani', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    overflow: hidden;
+    background: #000;
+    font-family: var(--font-body);
+    user-select: none;
+}
+
+/* ── Canvas ──────────────────────────────────── */
+#canvas-container {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* ── Scrollbar ───────────────────────────────── */
+::-webkit-scrollbar              { width: 4px; height: 4px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgba(78,202,255,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(198,168,94,0.4); }
+
+/* ── Loading overlay ─────────────────────────── */
+#loading {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 18px; z-index: 4000;
+    transition: opacity 0.6s ease;
+}
+#loading.hidden { opacity: 0; pointer-events: none; }
+.ld-ring {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(198,168,94,0.2);
+    border-top-color: var(--gold);
+    animation: spin .9s linear infinite;
+}
+.ld-title {
+    font-family: var(--font-hud);
+    font-size: 11px; letter-spacing: 4px;
+    color: var(--gold);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Slot detail panel animation ─────────────── */
+@keyframes panelIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── World breadcrumb ────────────────────────── */
+#world-breadcrumb {
+    transition: opacity 0.3s;
+}
+
+/* ── Leaderboard HUD ─────────────────────────── */
+#leaderboard-hud {
+    transition: opacity 0.3s;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+/* ── Coin balance HUD ────────────────────────── */
+#coin-balance-hud {
+    transition: all 0.3s;
+}
+#coin-balance-hud:hover {
+    border-color: rgba(198,168,94,0.6) !important;
+    box-shadow: 0 0 20px rgba(198,168,94,0.2);
+}
+
+/* ── Buttons ─────────────────────────────────── */
+button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 640px) {
+    #leaderboard-hud {
+        display: none !important;  /* hidden on mobile, accessible via back → world menu */
+    }
+    #slot-detail-panel {
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        bottom: 70px !important;
+    }
+}
+
+/* ── FPS Debug overlay (dev only) ────────────── */
+#fps-debug {
+    position: fixed;
+    top: 60px; left: 20px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: rgba(0,245,160,0.5);
+    z-index: 200;
+    pointer-events: none;
+    display: none;  /* set to block to enable */
+}

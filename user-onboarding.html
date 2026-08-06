@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0E0E0E;
+            --bg-secondary: #111111;
+            --text-primary: #F5F5F5;
+            --text-secondary: #B8B8B8;
+            --accent-gold: #C6A75E;
+            --accent-gold-hover: #D4B96E;
+            --divider: rgba(255, 255, 255, 0.08);
+            --error-red: #EF4444;
+            --success-green: #10B981;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 48px;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            text-align: left;
+            max-width: 680px;
+        }
+
+        .page-logo {
+            width: 60px;
+            height: auto;
+        }
+
+        .header-text h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .header-text p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .form-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--divider);
+            border-radius: 12px;
+            padding: 48px;
+        }
+
+        .form-section {
+            margin-bottom: 40px;
+        }
+
+        .form-section:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--accent-gold);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: var(--error-red);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--divider);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        /* ── EXACT SAME availability-check classes as brand onboarding ── */
+        .availability-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .availability-check.checking {
+            color: var(--text-secondary);
+        }
+
+        .availability-check.available {
+            color: var(--success-green);
+        }
+
+        .availability-check.unavailable {
+            color: var(--error-red);
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+
+        .form-group input:invalid:not(:placeholder-shown) {
+            border-color: var(--error-red);
+        }
+
+        .form-group input:valid:not(:placeholder-shown) {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .checkbox-label:hover {
+            background-color: rgba(198, 167, 94, 0.1);
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--accent-gold);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 32px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background-color: var(--accent-gold-hover);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 640px) {
+            .form-card { padding: 32px 24px; }
+            .header h1 { font-size: 32px; }
+            .checkbox-group { grid-template-columns: 1fr; }
+            .header-top { flex-direction: column; }
+            .page-logo { width: 48px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <img src="assets/images/logo.png" alt="Billion Dollar Universe logo" class="page-logo">
+                <div class="header-text">
+                    <h1>Complete Your Profile</h1>
+                    <p>Tell us about yourself to join the Billion Dollar Universe</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form id="onboardingForm">
+
+                <div class="form-section">
+                    <h2 class="section-title">Personal Information</h2>
+
+                    <div class="form-group">
+                        <label>Full Name <span class="required">*</span></label>
+                        <input type="text" id="fullName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Username <span class="required">*</span></label>
+                        <input type="text" id="username" required pattern="[a-z0-9_]+" minlength="3"
+                               title="Only lowercase letters, numbers, and underscores allowed. No spaces or hyphens.">
+                        <div class="helper-text">
+                            ✓ Lowercase letters (a-z)<br>
+                            ✓ Numbers (0-9)<br>
+                            ✓ Underscores (_)<br>
+                            ✗ No hyphens, spaces, or special characters
+                        </div>
+                        <div id="usernameAvailability" class="availability-check"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Country <span class="required">*</span></label>
+                        <select name="country" id="country" required>
+                            <option value="">Select your country</option>
+                            <option value="AF">Afghanistan</option>
+                            <option value="AL">Albania</option>
+                            <option value="DZ">Algeria</option>
+                            <option value="AD">Andorra</option>
+                            <option value="AO">Angola</option>
+                            <option value="AG">Antigua and Barbuda</option>
+                            <option value="AR">Argentina</option>
+                            <option value="AM">Armenia</option>
+                            <option value="AU">Australia</option>
+                            <option value="AT">Austria</option>
+                            <option value="AZ">Azerbaijan</option>
+                            <option value="BS">Bahamas</option>
+                            <option value="BH">Bahrain</option>
+                            <option value="BD">Bangladesh</option>
+                            <option value="BB">Barbados</option>
+                            <option value="BY">Belarus</option>
+                            <option value="BE">Belgium</option>
+                            <option value="BZ">Belize</option>
+                            <option value="BJ">Benin</option>
+                            <option value="BT">Bhutan</option>
+                            <option value="BO">Bolivia</option>
+                            <option value="BA">Bosnia and Herzegovina</option>
+                            <option value="BW">Botswana</option>
+                            <option value="BR">Brazil</option>
+                            <option value="BN">Brunei</option>
+                            <option value="BG">Bulgaria</option>
+                            <option value="BF">Burkina Faso</option>
+                            <option value="BI">Burundi</option>
+                            <option value="CV">Cabo Verde</option>
+                            <option value="KH">Cambodia</option>
+                            <option value="CM">Cameroon</option>
+                            <option value="CA">Canada</option>
+                            <option value="CF">Central African Republic</option>
+                            <option value="TD">Chad</option>
+                            <option value="CL">Chile</option>
+                            <option value="CN">China</option>
+                            <option value="CO">Colombia</option>
+                            <option value="KM">Comoros</option>
+                            <option value="CG">Congo (Congo-Brazzaville)</option>
+                            <option value="CD">Congo (Democratic Republic)</option>
+                            <option value="CR">Costa Rica</option>
+                            <option value="HR">Croatia</option>
+                            <option value="CU">Cuba</option>
+                            <option value="CY">Cyprus</option>
+                            <option value="CZ">Czechia (Czech Republic)</option>
+                            <option value="DK">Denmark</option>
+                            <option value="DJ">Djibouti</option>
+                            <option value="DM">Dominica</option>
+                            <option value="DO">Dominican Republic</option>
+                            <option value="EC">Ecuador</option>
+                            <option value="EG">Egypt</option>
+                            <option value="SV">El Salvador</option>
+                            <option value="GQ">Equatorial Guinea</option>
+                            <option value="ER">Eritrea</option>
+                            <option value="EE">Estonia</option>
+                            <option value="SZ">Eswatini</option>
+                            <option value="ET">Ethiopia</option>
+                            <option value="FJ">Fiji</option>
+                            <option value="FI">Finland</option>
+                            <option value="FR">France</option>
+                            <option value="GA">Gabon</option>
+                            <option value="GM">Gambia</option>
+                            <option value="GE">Georgia</option>
+                            <option value="DE">Germany</option>
+                            <option value="GH">Ghana</option>
+                            <option value="GR">Greece</option>
+                            <option value="GD">Grenada</option>
+                            <option value="GT">Guatemala</option>
+                            <option value="GN">Guinea</option>
+                            <option value="GW">Guinea-Bissau</option>
+                            <option value="GY">Guyana</option>
+                            <option value="HT">Haiti</option>
+                            <option value="HN">Honduras</option>
+                            <option value="HU">Hungary</option>
+                            <option value="IS">Iceland</option>
+                            <option value="IN">India</option>
+                            <option value="ID">Indonesia</option>
+                            <option value="IR">Iran</option>
+                            <option value="IQ">Iraq</option>
+                            <option value="IE">Ireland</option>
+                            <option value="IL">Israel</option>
+                            <option value="IT">Italy</option>
+                            <option value="JM">Jamaica</option>
+                            <option value="JP">Japan</option>
+                            <option value="JO">Jordan</option>
+                            <option value="KZ">Kazakhstan</option>
+                            <option value="KE">Kenya</option>
+                            <option value="KI">Kiribati</option>
+                            <option value="KP">Korea (North)</option>
+                            <option value="KR">Korea (South)</option>
+                            <option value="KW">Kuwait</option>
+                            <option value="KG">Kyrgyzstan</option>
+                            <option value="LA">Laos</option>
+                            <option value="LV">Latvia</option>
+                            <option value="LB">Lebanon</option>
+                            <option value="LS">Lesotho</option>
+                            <option value="LR">Liberia</option>
+                            <option value="LY">Libya</option>
+                            <option value="LI">Liechtenstein</option>
+                            <option value="LT">Lithuania</option>
+                            <option value="LU">Luxembourg</option>
+                            <option value="MG">Madagascar</option>
+                            <option value="MW">Malawi</option>
+                            <option value="MY">Malaysia</option>
+                            <option value="MV">Maldives</option>
+                            <option value="ML">Mali</option>
+                            <option value="MT">Malta</option>
+                            <option value="MH">Marshall Islands</option>
+                            <option value="MR">Mauritania</option>
+                            <option value="MU">Mauritius</option>
+                            <option value="MX">Mexico</option>
+                            <option value="FM">Micronesia</option>
+                            <option value="MD">Moldova</option>
+                            <option value="MC">Monaco</option>
+                            <option value="MN">Mongolia</option>
+                            <option value="ME">Montenegro</option>
+                            <option value="MA">Morocco</option>
+                            <option value="MZ">Mozambique</option>
+                            <option value="MM">Myanmar</option>
+                            <option value="NA">Namibia</option>
+                            <option value="NR">Nauru</option>
+                            <option value="NP">Nepal</option>
+                            <option value="NL">Netherlands</option>
+                            <option value="NZ">New Zealand</option>
+                            <option value="NI">Nicaragua</option>
+                            <option value="NE">Niger</option>
+                            <option value="NG">Nigeria</option>
+                            <option value="MK">North Macedonia</option>
+                            <option value="NO">Norway</option>
+                            <option value="OM">Oman</option>
+                            <option value="PK">Pakistan</option>
+                            <option value="PW">Palau</option>
+                            <option value="PA">Panama</option>
+                            <option value="PG">Papua New Guinea</option>
+                            <option value="PY">Paraguay</option>
+                            <option value="PE">Peru</option>
+                            <option value="PH">Philippines</option>
+                            <option value="PL">Poland</option>
+                            <option value="PT">Portugal</option>
+                            <option value="QA">Qatar</option>
+                            <option value="RO">Romania</option>
+                            <option value="RU">Russia</option>
+                            <option value="RW">Rwanda</option>
+                            <option value="KN">Saint Kitts and Nevis</option>
+                            <option value="LC">Saint Lucia</option>
+                            <option value="VC">Saint Vincent and the Grenadines</option>
+                            <option value="WS">Samoa</option>
+                            <option value="SM">San Marino</option>
+                            <option value="ST">Sao Tome and Principe</option>
+                            <option value="SA">Saudi Arabia</option>
+                            <option value="SN">Senegal</option>
+                            <option value="RS">Serbia</option>
+                            <option value="SC">Seychelles</option>
+                            <option value="SL">Sierra Leone</option>
+                            <option value="SG">Singapore</option>
+                            <option value="SK">Slovakia</option>
+                            <option value="SI">Slovenia</option>
+                            <option value="SB">Solomon Islands</option>
+                            <option value="SO">Somalia</option>
+                            <option value="ZA">South Africa</option>
+                            <option value="SS">South Sudan</option>
+                            <option value="ES">Spain</option>
+                            <option value="LK">Sri Lanka</option>
+                            <option value="SD">Sudan</option>
+                            <option value="SR">Suriname</option>
+                            <option value="SE">Sweden</option>
+                            <option value="CH">Switzerland</option>
+                            <option value="SY">Syria</option>
+                            <option value="TW">Taiwan</option>
+                            <option value="TJ">Tajikistan</option>
+                            <option value="TZ">Tanzania</option>
+                            <option value="TH">Thailand</option>
+                            <option value="TL">Timor-Leste</option>
+                            <option value="TG">Togo</option>
+                            <option value="TO">Tonga</option>
+                            <option value="TT">Trinidad and Tobago</option>
+                            <option value="TN">Tunisia</option>
+                            <option value="TR">Turkey</option>
+                            <option value="TM">Turkmenistan</option>
+                            <option value="TV">Tuvalu</option>
+                            <option value="UG">Uganda</option>
+                            <option value="UA">Ukraine</option>
+                            <option value="AE">United Arab Emirates</option>
+                            <option value="GB">United Kingdom</option>
+                            <option value="US">United States</option>
+                            <option value="UY">Uruguay</option>
+                            <option value="UZ">Uzbekistan</option>
+                            <option value="VU">Vanuatu</option>
+                            <option value="VA">Vatican City</option>
+                            <option value="VE">Venezuela</option>
+                            <option value="VN">Vietnam</option>
+                            <option value="YE">Yemen</option>
+                            <option value="ZM">Zambia</option>
+                            <option value="ZW">Zimbabwe</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2 class="section-title">Your Interests (Optional)</h2>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Technology"> Technology</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Fashion"> Fashion</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Food"> Food</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Gaming"> Gaming</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Sports"> Sports</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Music"> Music</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Travel"> Travel</label>
+                        <label class="checkbox-label"><input type="checkbox" name="interests" value="Fitness"> Fitness</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>Complete Setup</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="scripts/firebase-config.js"></script>
+
+    <script>
+        // ── AUTH: block if not logged in OR already has a user account ──
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                window.location.href = 'user-dashboard.html';
+                return;
+            }
+            // Pre-fill name from Google account
+            const nameInput = document.getElementById('fullName');
+            if (user.displayName && !nameInput.value) {
+                nameInput.value = user.displayName;
+                validateForm();
+            }
+        });
+
+        // ── ELEMENTS ──
+        const usernameInput        = document.getElementById('username');
+        const usernameAvailability = document.getElementById('usernameAvailability');
+        const submitBtn            = document.getElementById('submitBtn');
+
+        // Start as false — button stays locked until check passes
+        usernameInput.dataset.available = 'false';
+
+        // Username validation and availability check
+        let usernameTimeout;
+
+        usernameInput.addEventListener('input', async (e) => {
+            const username = e.target.value.toLowerCase();
+            usernameInput.value = username; // Force lowercase
+
+            clearTimeout(usernameTimeout);
+
+            // Check for invalid characters
+            const validPattern = /^[a-z0-9_]*$/;
+            if (username.length > 0 && !validPattern.test(username)) {
+                usernameAvailability.textContent = '✗ Only lowercase letters, numbers, and underscores allowed';
+                usernameAvailability.className = 'availability-check unavailable';
+                usernameInput.dataset.available = 'false';
+                validateForm();
+                return;
+            }
+
+            if (username.length < 3) {
+                usernameAvailability.textContent = '';
+                usernameAvailability.className = 'availability-check';
+                usernameInput.dataset.available = 'true';
+                validateForm();
+                return;
+            }
+
+            usernameAvailability.textContent = 'Checking availability...';
+            usernameAvailability.className = 'availability-check checking';
+
+            usernameTimeout = setTimeout(async () => {
+                try {
+                    if (!firebase.firestore) {
+                        throw new Error('Firestore not initialized');
+                    }
+
+                    const [usersSnap, brandsSnap] = await Promise.all([
+                        firebase.firestore().collection('users').where('username', '==', username).limit(1).get(),
+                        firebase.firestore().collection('brands').where('username', '==', username).limit(1).get()
+                    ]);
+
+                    if (usersSnap.empty && brandsSnap.empty) {
+                        usernameAvailability.textContent = '✓ Username available';
+                        usernameAvailability.className = 'availability-check available';
+                        usernameInput.dataset.available = 'true';
+                    } else {
+                        usernameAvailability.textContent = '✗ Username already taken';
+                        usernameAvailability.className = 'availability-check unavailable';
+                        usernameInput.dataset.available = 'false';
+                    }
+                } catch (error) {
+                    console.error('Error checking username:', error);
+                    usernameAvailability.textContent = '⚠ Unable to verify - will check on submit';
+                    usernameAvailability.className = 'availability-check checking';
+                    usernameInput.dataset.available = 'true';
+                }
+                validateForm();
+            }, 500);
+        });
+
+
+        // ── FORM VALIDATION ──
+        function validateForm() {
+            const form = document.getElementById('onboardingForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            const isFormValid = form.checkValidity();
+            const isUsernameAvailable = usernameInput.dataset.available === 'true';
+
+            const invalidFields = [];
+            form.querySelectorAll('[required]').forEach(field => {
+                if (!field.checkValidity()) {
+                    invalidFields.push({ id: field.id, validationMessage: field.validationMessage });
+                }
+            });
+
+            if (invalidFields.length > 0) {
+                console.log('Form has validation errors:', invalidFields);
+            }
+
+            submitBtn.disabled = !(isFormValid && isUsernameAvailable);
+
+            if (!isFormValid && invalidFields.length > 0) {
+                submitBtn.textContent = `Complete all required fields (${invalidFields.length} missing)`;
+            } else if (!isUsernameAvailable) {
+                submitBtn.textContent = 'Fix username to continue';
+            } else {
+                submitBtn.textContent = 'Complete Setup';
+            }
+        }
+
+        // Re-validate on every field change
+        document.querySelectorAll('input[required], select[required]').forEach(field => {
+            field.addEventListener('input', validateForm);
+            field.addEventListener('change', validateForm);
+        });
+
+        // ── SUBMIT ──
+        document.getElementById('onboardingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating profile...';
+
+            const user     = firebase.auth().currentUser;
+            const username = usernameInput.value.toLowerCase();
+
+            try {
+                // Final race-condition check on both collections
+                const [usersSnap, brandsSnap] = await Promise.all([
+                    firebase.firestore().collection('users').where('username', '==', username).limit(1).get(),
+                    firebase.firestore().collection('brands').where('username', '==', username).limit(1).get()
+                ]);
+
+                if (!usersSnap.empty || !brandsSnap.empty) {
+                    usernameAvailability.textContent = '✗ Username just taken — please choose another';
+                    usernameAvailability.className = 'availability-check unavailable';
+                    usernameInput.dataset.available = 'false';
+                    validateForm();
+                    return;
+                }
+
+                // ✅ FIX: 'role' and 'createdAt' are required by the Firestore security rule
+                const userData = {
+                    userId:          user.uid,
+                    fullName:        document.getElementById('fullName').value.trim(),
+                    username,
+                    email:           user.email,
+                    photoURL:        user.photoURL || '',
+                    country:         document.getElementById('country').value,
+                    interests:       Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(cb => cb.value),
+                    role:            'user',  // ✅ REQUIRED by security rule
+                    coins:           0,
+                    totalClicks:     0,
+                    engagementScore: 0,
+                    createdAt:       firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await firebase.firestore().collection('users').doc(user.uid).set(userData);
+                window.location.href = 'user-dashboard.html';
+
+            } catch (error) {
+                console.error('Error creating profile:', error);
+                alert('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Setup';
+            }
+        });
+    </script>
+
+    <script>
+        // ── PRIORITY COUNTRIES + AUTO-DETECT ──
+        document.addEventListener('DOMContentLoaded', () => {
+            const countrySelect = document.getElementById('country');
+
+            const priorityCodes = ['US', 'NG', 'GB', 'CA', 'AU'];
+
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.innerText = '──────────';
+
+            if (countrySelect.options.length > 1) {
+                countrySelect.insertBefore(separator, countrySelect.options[1]);
+            }
+
+            [...priorityCodes].reverse().forEach(code => {
+                const option = countrySelect.querySelector(`option[value="${code}"]`);
+                if (option) {
+                    countrySelect.insertBefore(option, countrySelect.options[1]);
+                }
+            });
+
+            // Auto-detect country via IP
+            fetch('https://ipapi.co/json/')
+                .then(response => response.json())
+                .then(data => {
+                    const opt = countrySelect.querySelector(`option[value="${data.country}"]`);
+                    if (opt) {
+                        countrySelect.value = data.country;
+                        validateForm();
+                    }
+                })
+                .catch(() => {});
+        });
+    </script>
+</body>
+</html>

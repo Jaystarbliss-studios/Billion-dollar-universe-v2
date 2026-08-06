@@ -1,0 +1,16 @@
+# start-claude.ps1
+# 1️⃣ Set current folder as Python module path
+$env:PYTHONPATH="."
+
+# 2️⃣ Start the server in a new PowerShell window
+Start-Process powershell -ArgumentList "-NoExit", "-Command `"python -m uvicorn server:app --host 0.0.0.0 --port 8082`""
+
+# 3️⃣ Wait a few seconds for the server to start
+Start-Sleep -Seconds 5
+
+# 4️⃣ Set Claude environment variables
+$env:ANTHROPIC_AUTH_TOKEN="freecc"
+$env:ANTHROPIC_BASE_URL="http://localhost:8082"
+
+# 5️⃣ Start Claude CLI in current terminal
+claude

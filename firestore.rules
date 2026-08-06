@@ -1,0 +1,392 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════
+//  BRAND UNIVERSE — FIRESTORE SECURITY RULES
+//  Version: 2.2 (Sign-in/Sign-up fix — no custom-claim dependency)
+// ═══════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPER FUNCTIONS ──────────────────────────────────────────
+
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Read role from custom claims if set, otherwise default 'user'.
+    function claimRole() {
+      return request.auth != null
+        ? request.auth.token.get('role', 'user')
+        : 'user';
+    }
+
+    // FIX: Also read the role from the Firestore user doc so brands
+    // that haven't had custom claims minted yet still pass role checks.
+    function firestoreRole() {
+      return isLoggedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user')
+        : 'user';
+    }
+
+    // A user passes a role check if EITHER their token claim OR their
+    // Firestore doc matches — this bridges the registration window.
+    function isUserRole()  {
+      return isLoggedIn() && (claimRole() == 'user'  || firestoreRole() == 'user');
+    }
+    function isBrandRole() {
+      return isLoggedIn() && (claimRole() == 'brand' || firestoreRole() == 'brand');
+    }
+    function isAdminRole() {
+      return isLoggedIn() && (claimRole() == 'admin' || firestoreRole() == 'admin');
+    }
+
+    function isAdmin() {
+      return isLoggedIn() && (
+        claimRole() == 'admin' ||
+        firestoreRole() == 'admin' ||
+        request.auth.token.email == 'johnrufai242@gmail.com'
+      );
+    }
+
+    function claimBrandId() {
+      return request.auth != null
+        ? request.auth.token.get('brandId', null)
+        : null;
+    }
+
+    // FIX: Brand ownership check no longer depends solely on custom claims.
+    // Accepts UID-as-brandId, claimed brandId, OR brandId stored in user doc.
+    function isBrandOwner(brandId) {
+      return isLoggedIn() && (
+        request.auth.uid == brandId ||
+        claimBrandId() == brandId ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('brandId', null) == brandId
+        )
+      );
+    }
+
+    function slotIsAvailable(worldKey, slotId) {
+      return !exists(/databases/$(database)/documents/worlds/$(worldKey)/slots/$(slotId))
+        || get(/databases/$(database)/documents/worlds/$(worldKey)/slots/$(slotId)).data.ownerId == null;
+    }
+
+    function doesNotTouch(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function onlyContains(allowedKeys) {
+      return request.resource.data.keys().hasOnly(allowedKeys);
+    }
+
+    function isValidVideoUrl(url) {
+      return url.matches('https://(www\\.)?(youtube\\.com|youtu\\.be|vimeo\\.com)/.+');
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  USERS   /users/{uid}
+    // ══════════════════════════════════════════════════════════════
+    match /users/{uid} {
+
+      allow read: if isLoggedIn();
+
+      // FIX 1: role can be 'user' OR 'brand' on create.
+      // Brand registration writes role:'brand' to the user doc before
+      // any custom claims are minted — the old 'user'-only rule blocked this.
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['role', 'createdAt'])
+        && request.resource.data.role in ['user', 'brand']
+        && (!('credits' in request.resource.data) || request.resource.data.credits == 0);
+
+      // FIX 2: Owner can update own profile fields.
+      // Removed 'brandId' from the blocked list — brands need to write
+      // their brandId to the user doc during registration.
+      allow update: if isOwner(uid)
+        && doesNotTouch(['credits', 'role', 'totalClicks', 'engagementScore'])
+        && (!('uid' in request.resource.data) || request.resource.data.uid == uid);
+
+      // FIX 3: Allow owner to update ONLY role + brandId together when
+      // linking a brand account. Prevents escalation to 'admin'.
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'brandId'])
+        && request.resource.data.role in ['user', 'brand'];
+
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  BRANDS   /brands/{brandId}
+    // ══════════════════════════════════════════════════════════════
+    match /brands/{brandId} {
+
+      allow read: if true;
+
+      // FIX 4: Brand doc creation no longer requires isBrandRole() claim.
+      // At registration time the user's UID equals the brand doc ID, so
+      // isOwner(brandId) is sufficient and safe.
+      allow create: if isOwner(brandId) || isBrandRole() || isAdmin();
+
+      allow update: if isBrandOwner(brandId)
+        && doesNotTouch(['boostCredits', 'coins', 'ownerUid', 'tier', 'slotCount', 'coinsSpentTotal']);
+
+      allow update: if isAdmin();
+      allow delete: if false;
+
+      match /slots/{slotDoc} {
+        allow read:   if isLoggedIn();
+        allow create: if isBrandOwner(brandId)
+          && request.resource.data.slotIndex is int
+          && request.resource.data.industry   is string;
+        allow update: if isBrandOwner(brandId);
+        allow delete: if false;
+      }
+
+      match /analytics/{docId} {
+        allow read:  if isBrandOwner(brandId) || isAdmin();
+        allow write: if isAdmin();
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  WORLDS / SLOTS / BUILDINGS   /worlds/{worldKey}/...
+    // ══════════════════════════════════════════════════════════════
+    match /worlds/{worldKey} {
+
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+
+      match /slots/{slotId} {
+        allow read: if isLoggedIn();
+
+        allow create: if isLoggedIn()
+          && request.resource.data.ownerId == request.auth.uid
+          && slotIsAvailable(worldKey, slotId)
+          && (
+            (isUserRole()  && request.resource.data.ownerType == 'user')  ||
+            (isBrandRole() && request.resource.data.ownerType == 'brand') ||
+            isAdmin()
+          )
+          && request.resource.data.keys().hasAll(['slotIndex', 'ownerId', 'ownerType', 'buildingFloors'])
+          && request.resource.data.buildingFloors == 1;
+
+        allow update: if isLoggedIn()
+          && resource.data.ownerId == request.auth.uid
+          && doesNotTouch(['ownerId', 'ownerType', 'slotIndex', 'pricePaid', 'purchasedAt']);
+
+        allow update: if isAdmin();
+        allow delete: if false;
+      }
+
+      match /buildings/{buildingId} {
+        allow read: if isLoggedIn();
+        allow create: if isLoggedIn()
+          && request.resource.data.brandId == request.auth.uid;
+        allow update: if isLoggedIn()
+          && resource.data.brandId == request.auth.uid;
+        allow delete: if false;
+      }
+
+      match /leaderboard/{entry} {
+        allow read:  if isLoggedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  ADS   /ads/{adId}
+    // ══════════════════════════════════════════════════════════════
+    match /ads/{adId} {
+
+      allow read: if isLoggedIn();
+
+      allow create: if isBrandRole()
+        && request.resource.data.brandId == claimBrandId()
+        && isValidVideoUrl(request.resource.data.videoUrl)
+        && request.resource.data.keys().hasAll(['brandId', 'videoUrl', 'title', 'createdAt'])
+        && request.resource.data.get('impressions', 0) == 0
+        && request.resource.data.get('status', 'pending') == 'pending';
+
+      allow update: if isBrandRole()
+        && resource.data.brandId == claimBrandId()
+        && doesNotTouch(['impressions', 'status', 'brandId', 'createdAt'])
+        && (
+          !('videoUrl' in request.resource.data) ||
+          isValidVideoUrl(request.resource.data.videoUrl)
+        );
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  AD SCHEDULES   /adSchedules/{scheduleId}
+    // ══════════════════════════════════════════════════════════════
+    match /adSchedules/{scheduleId} {
+      allow read: if isLoggedIn()
+        && (resource.data.brandId == claimBrandId() || isAdmin());
+      allow create: if isBrandRole()
+        && request.resource.data.brandId == claimBrandId()
+        && request.resource.data.keys().hasAll(['brandId', 'adId', 'startTime', 'endTime']);
+      allow update: if isBrandRole()
+        && resource.data.brandId == claimBrandId()
+        && doesNotTouch(['brandId', 'adId']);
+      allow delete: if isBrandRole()
+        && resource.data.brandId == claimBrandId();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  CREDIT TRANSACTIONS   /creditTransactions/{txId}
+    // ══════════════════════════════════════════════════════════════
+    match /creditTransactions/{txId} {
+
+      allow read: if isLoggedIn()
+        && resource.data.uid == request.auth.uid;
+
+      allow create: if isUserRole()
+        && request.resource.data.uid     == request.auth.uid
+        && request.resource.data.status  == 'pending'
+        && request.resource.data.amount  is int
+        && request.resource.data.amount  > 0
+        && request.resource.data.amount  <= 100
+        && request.resource.data.source  in ['ad_watch', 'referral', 'engagement']
+        && doesNotTouch(['processedAt', 'approved']);
+
+      allow update: if false;
+      allow delete: if false;
+      allow read:   if isAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  SLOT PURCHASE TRANSACTIONS   /transactions/{txId}
+    // ══════════════════════════════════════════════════════════════
+    match /transactions/{txId} {
+      allow read: if isLoggedIn()
+        && resource.data.brandId == request.auth.uid;
+      allow create: if isLoggedIn()
+        && request.resource.data.brandId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if false;
+      allow delete: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  AUCTIONS   /auctions/{auctionId}
+    // ══════════════════════════════════════════════════════════════
+    match /auctions/{auctionId} {
+      allow read: if isLoggedIn();
+      allow create: if isAdmin();
+      allow update: if isLoggedIn()
+        && resource.data.state == 'active'
+        && request.resource.data.state == 'active'
+        && request.resource.data.currentBidder == request.auth.uid
+        && request.resource.data.currentBid    >  resource.data.currentBid
+        && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['currentBid', 'currentBidder', 'lastBidAt']);
+      allow delete: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  ADMIN AUDIT LOG   /adminLog/{entry}
+    // ══════════════════════════════════════════════════════════════
+    match /adminLog/{entry} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  CITY WORLDS   /cities/{cityId}
+    // ══════════════════════════════════════════════════════════════
+    match /cities/{cityId} {
+
+      allow read: if isLoggedIn();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+
+      match /parcels/{parcelId} {
+        allow read: if isLoggedIn();
+
+        allow create: if isLoggedIn()
+          && request.auth.uid != null
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerType in ['user', 'brand']
+          && request.resource.data.parcelId == parcelId
+          && request.resource.data.pricePaid is int
+          && request.resource.data.pricePaid > 0
+          && request.resource.data.keys().hasAll([
+            'parcelId', 'ownerId', 'ownerType', 'districtName',
+            'zoneType', 'bounds', 'centerLat', 'centerLon',
+            'basePrice', 'pricePaid', 'purchasedAt'
+          ])
+          && doesNotTouch([
+            'buildingType', 'buildingTier', 'buildingBuiltAt', 'pointsPerDay'
+          ]);
+
+        allow update: if isLoggedIn()
+          && resource.data.ownerId == request.auth.uid
+          && doesNotTouch([
+            'ownerId', 'ownerType', 'parcelId', 'basePrice',
+            'pricePaid', 'purchasedAt', 'districtName', 'zoneType',
+            'bounds', 'centerLat', 'centerLon'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'buildingType', 'buildingTier', 'buildingBuiltAt', 'pointsPerDay'
+          ]);
+
+        allow delete: if false;
+      }
+
+      match /leaderboard/{entry} {
+        allow read:  if isLoggedIn();
+        allow write: if isAdmin();
+      }
+
+      match /auction/{auctionId} {
+        allow read: if isLoggedIn();
+        allow create: if isAdmin();
+        allow update: if isLoggedIn()
+          && resource.data.state == 'active'
+          && request.resource.data.state == 'active'
+          && request.resource.data.currentBid > resource.data.currentBid
+          && request.resource.data.currentBidder == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['currentBid', 'currentBidder', 'lastBidAt']);
+        allow delete: if false;
+      }
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  CITY QUEUE   /cityQueue/{docId}
+    // ══════════════════════════════════════════════════════════════
+    match /cityQueue/{docId} {
+      allow read:  if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  CATCH-ALL — deny everything not explicitly permitted
+    // ══════════════════════════════════════════════════════════════
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}

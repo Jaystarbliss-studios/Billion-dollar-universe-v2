@@ -1,0 +1,20 @@
+{
+  "name": "billion-dollar-webpage",
+  "version": "1.0.0",
+  "description": "> **A virtual universe where brands compete for visibility, users earn rewards, and admins maintain the ecosystem.**\r > Built with vanilla JavaScript, Three.js, Firebase, and Paystack.",
+  "main": "cloud-functions-roleclaims.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No build step'",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "firebase-admin": "^13.6.1",
+    "node-fetch": "^3.3.2"
+  }
+}

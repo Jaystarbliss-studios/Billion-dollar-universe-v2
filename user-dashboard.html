@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>User Dashboard — Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black:      #040608;
+            --panel:      rgba(8,18,32,0.75);
+            --panel-edge: rgba(100,185,255,0.12);
+            --gold:       #C6A75E;
+            --gold-dim:   rgba(198,167,94,0.15);
+            --gold-glow:  rgba(198,167,94,0.3);
+            --cyan:       #4ECAFF;
+            --cyan-dim:   rgba(78,202,255,0.1);
+            --green:      #00F5A0;
+            --red:        #FF4060;
+            --text:       #D8E8F0;
+            --muted:      rgba(180,210,230,0.55);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--black); color: var(--text);
+            min-height: 100vh; overflow-x: hidden; font-weight: 500;
+        }
+
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(78,202,255,.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(78,202,255,.025) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none; z-index: 0;
+        }
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: .35; animation: scanDown 9s linear infinite;
+            pointer-events: none; z-index: 1;
+        }
+        @keyframes scanDown { 0%{top:0;opacity:.35} 90%{opacity:.35} 100%{top:100vh;opacity:0} }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            position: sticky; top: 0; z-index: 900;
+            height: 52px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(14px, 3vw, 28px);
+            background: rgba(4,6,8,.95); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-edge);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; }
+        .nav-brand-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(9px, 2vw, 13px); font-weight: 700;
+            letter-spacing: clamp(1px, .5vw, 3px); color: var(--gold);
+            text-shadow: 0 0 18px var(--gold-glow); text-transform: uppercase; white-space: nowrap;
+        }
+        .nav-logo { width: 32px; height: auto; }
+        .nav-right { display: flex; align-items: center; gap: clamp(6px, 1.5vw, 14px); }
+        .nav-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; flex-shrink: 0; }
+        .nav-user-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .nav-username {
+            font-family: 'Orbitron', monospace; font-size: clamp(8px, 1.5vw, 10px);
+            font-weight: 700; color: var(--gold); letter-spacing: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+        }
+        .nav-email { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .btn-logout {
+            font-family: 'Orbitron', monospace; font-size: 8px; letter-spacing: 1.5px;
+            font-weight: 700; padding: 5px clamp(8px, 1.5vw, 14px);
+            background: transparent; border: 1px solid rgba(255,64,96,.35);
+            color: var(--red); border-radius: 2px; cursor: pointer; transition: all .2s; white-space: nowrap;
+        }
+        .btn-logout:hover { background: rgba(255,64,96,.08); box-shadow: 0 0 10px rgba(255,64,96,.15); }
+
+        /* ── SHELL ── */
+        .shell {
+            position: relative; z-index: 2;
+            max-width: 1280px; margin: 0 auto;
+            padding: clamp(16px, 3vw, 28px) clamp(12px, 3vw, 24px) 120px;
+        }
+
+        /* ── WELCOME BANNER ── */
+        .welcome-banner {
+            margin-bottom: 18px; padding: clamp(14px, 3vw, 18px) clamp(16px, 3vw, 22px);
+            background: var(--panel); backdrop-filter: blur(14px);
+            border: 1px solid var(--panel-edge); border-radius: 4px;
+            position: relative; overflow: hidden;
+        }
+        .welcome-banner::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: .4;
+        }
+        .welcome-tag { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 3px; color: var(--muted); margin-bottom: 5px; }
+        .welcome-title { font-family: 'Rajdhani', sans-serif; font-size: clamp(18px, 4vw, 22px); font-weight: 700; color: #fff; }
+        .welcome-title span { color: var(--gold); }
+        .welcome-sub { font-size: clamp(11px, 2vw, 13px); font-weight: 600; color: var(--muted); margin-top: 2px; }
+
+        /* ── STAT BAR ── */
+        .stat-bar {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px;
+        }
+        .stat {
+            background: var(--panel); backdrop-filter: blur(14px);
+            border: 1px solid var(--panel-edge); border-radius: 3px;
+            padding: clamp(12px, 2.5vw, 16px) clamp(12px, 2.5vw, 18px);
+            position: relative; overflow: hidden; transition: border-color .2s, box-shadow .2s;
+        }
+        .stat:hover { border-color: rgba(78,202,255,.22); box-shadow: 0 0 14px rgba(78,202,255,.05); }
+        .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: .25; }
+        .stat-tag { font-family: 'Orbitron', monospace; font-size: clamp(6px, 1.2vw, 7px); letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+        .stat-val { font-family: 'Orbitron', monospace; font-size: clamp(18px, 3.5vw, 26px); font-weight: 700; color: var(--gold); line-height: 1; }
+        .stat-sub { font-size: clamp(9px, 1.5vw, 11px); font-weight: 600; color: var(--muted); margin-top: 4px; }
+
+        .rank-pill { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 2px; font-family: 'Orbitron', monospace; font-size: clamp(6px, 1.2vw, 8px); font-weight: 700; letter-spacing: 1px; }
+        .rank-bronze   { background: rgba(205,127,50,.2);  color: #CD7F32; border: 1px solid rgba(205,127,50,.4); }
+        .rank-silver   { background: rgba(192,192,192,.12); color: #C0C0C0; border: 1px solid rgba(192,192,192,.3); }
+        .rank-gold     { background: rgba(255,215,0,.12);   color: #FFD700; border: 1px solid rgba(255,215,0,.3); }
+        .rank-platinum { background: rgba(229,228,226,.1);  color: #E5E4E2; border: 1px solid rgba(229,228,226,.3); }
+
+        /* ── SECTION ── */
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--panel-edge);
+        }
+        .section-title { font-family: 'Orbitron', monospace; font-size: clamp(8px, 1.5vw, 10px); letter-spacing: 2.5px; color: var(--muted); font-weight: 700; }
+        .section-count { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--cyan); opacity: .7; }
+
+        /* ── BRAND GRID ── */
+        .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+        .brand-card {
+            background: var(--panel); backdrop-filter: blur(14px);
+            border: 1px solid var(--panel-edge); border-radius: 4px; padding: clamp(14px, 3vw, 18px);
+            position: relative; overflow: hidden;
+            transition: border-color .2s, transform .2s, box-shadow .2s;
+        }
+        .brand-card:hover { border-color: rgba(78,202,255,.2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+        .brand-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent); }
+        .brand-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-bottom: 1px solid rgba(198,167,94,.3); border-right: 1px solid rgba(198,167,94,.3); }
+
+        .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .card-avatar { width: 40px; height: 40px; border-radius: 3px; border: 1px solid rgba(78,202,255,.2); object-fit: cover; flex-shrink: 0; }
+        .card-name { font-family: 'Rajdhani', sans-serif; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; color: #fff; display: flex; align-items: center; gap: 5px; }
+        .card-verified { font-size: 11px; color: var(--gold); }
+        .card-handle { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 2px; }
+        .card-stats { display: flex; gap: 16px; margin-bottom: 14px; }
+        .card-stat-item { display: flex; flex-direction: column; gap: 2px; }
+        .card-stat-num { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--cyan); font-weight: 700; }
+        .card-stat-label { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); font-weight: 700; letter-spacing: .5px; }
+
+        .btn-support {
+            width: 100%; font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; font-weight: 700;
+            padding: 10px; background: var(--gold-dim);
+            border: 1px solid rgba(198,167,94,.35); color: var(--gold);
+            border-radius: 2px; cursor: pointer; transition: all .2s;
+        }
+        .btn-support:hover:not(:disabled) { background: rgba(198,167,94,.25); box-shadow: 0 0 16px var(--gold-glow); }
+        .btn-support:disabled { opacity: .4; cursor: not-allowed; }
+        .btn-support.done { background: rgba(0,245,160,.1); border-color: rgba(0,245,160,.35); color: var(--green); }
+
+        /* loading / empty */
+        .state-msg { grid-column: 1 / -1; text-align: center; padding: 48px 0; }
+        .spinner { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--panel-edge); border-top-color: var(--cyan); animation: spin .8s linear infinite; margin: 0 auto 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .state-msg p { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); font-weight: 700; }
+
+        /* ── ORB CONTAINER ── */
+        #universe-orb-container {
+            position: fixed; right: clamp(14px,3vw,28px); bottom: clamp(14px,3vw,28px);
+            width: clamp(72px,9vw,100px); height: clamp(72px,9vw,100px);
+            z-index: 1200; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* ── GLASSMORPHIC LABEL ── */
+        .orb-label {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%; transform: translateX(-50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 8px; font-weight: 700; letter-spacing: 2px;
+            color: rgba(78, 202, 255, 0.75);
+            background: rgba(4, 12, 24, 0.45);
+            backdrop-filter: blur(10px) saturate(1.5);
+            -webkit-backdrop-filter: blur(10px) saturate(1.5);
+            border: 1px solid rgba(78, 202, 255, 0.18);
+            border-radius: 4px;
+            padding: 6px 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: labelFloat 3s ease-in-out infinite;
+            box-shadow: 0 0 18px rgba(78,202,255,0.07), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        @keyframes labelFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.75; }
+            50%       { transform: translateX(-50%) translateY(-4px); opacity: 1; }
+        }
+
+        #universe-canvas { width: 100%; height: 100%; display: block; }
+
+        .orb-ring {
+            position: absolute; inset: -6px; border-radius: 50%;
+            border: 1px solid rgba(78,202,255,.18);
+            animation: orbSpin 3.5s linear infinite; pointer-events: none;
+            transition: border-color .25s, inset .25s, box-shadow .25s;
+        }
+        .orb-ring:nth-child(2) { inset: -14px; border-color: rgba(198,167,94,.1); animation-duration: 6s; animation-direction: reverse; }
+        @keyframes orbSpin { to { transform: rotate(360deg); } }
+        #universe-orb-container:hover .orb-ring:nth-child(1) { border-color: rgba(78,202,255,.7); inset: -11px; animation-duration: .65s; box-shadow: 0 0 14px rgba(78,202,255,.35); }
+        #universe-orb-container:hover .orb-ring:nth-child(2) { border-color: rgba(198,167,94,.6); inset: -22px; animation-duration: 1.1s; }
+        #universe-orb-container:hover .orb-label { color: rgba(78,202,255,1); border-color: rgba(78,202,255,0.4); box-shadow: 0 0 22px rgba(78,202,255,0.18); }
+
+        /* ── REVEAL ── */
+        .reveal { opacity: 0; transform: translateY(8px); animation: rev .45s ease forwards; }
+        @keyframes rev { to { opacity: 1; transform: none; } }
+        .reveal:nth-child(1){animation-delay:.05s} .reveal:nth-child(2){animation-delay:.12s} .reveal:nth-child(3){animation-delay:.18s}
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 720px) {
+            .stat-bar { grid-template-columns: repeat(2,1fr); }
+            .brand-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .stat-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .brand-grid { grid-template-columns: 1fr; }
+            .nav-user-info { display: none; }
+            .nav-logo { width: 26px; }
+        }
+        @media (max-width: 360px) {
+            .stat-bar { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (hover: none) {
+            .brand-card:active { transform: scale(0.98); }
+            .btn-support:active { transform: scale(0.97); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="assets/images/logo.png" alt="Billion Dollar Universe logo" class="nav-logo">
+            <span class="nav-brand-text">User Dashboard</span>
+        </div>
+        <div class="nav-right">
+            <img src="" alt="" class="nav-avatar" id="userAvatar">
+            <div class="nav-user-info">
+                <div class="nav-username" id="navUsername">@—</div>
+                <div class="nav-email" id="userEmail">—</div>
+            </div>
+            <button class="btn-logout" id="logoutBtn">LOGOUT</button>
+        </div>
+    </nav>
+
+    <div class="shell">
+
+        <div class="welcome-banner reveal">
+            <div class="welcome-tag">// Welcome Back</div>
+            <div class="welcome-title">Hello, <span id="welcomeName">—</span></div>
+            <div class="welcome-sub" id="welcomeSub">Loading your profile…</div>
+        </div>
+
+        <div class="stat-bar reveal">
+            <div class="stat">
+                <div class="stat-tag">Coins Earned</div>
+                <div class="stat-val" id="coinsVal">0</div>
+                <div id="rankPillWrap"><span class="rank-pill rank-bronze" id="rankPill">BRONZE</span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-tag">Total Clicks</div>
+                <div class="stat-val" id="clicksVal">0</div>
+                <div class="stat-sub">support actions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-tag">Engagement</div>
+                <div class="stat-val" id="engageVal">0</div>
+                <div class="stat-sub">score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-tag">Influence Power</div>
+                <div class="stat-val" id="influenceVal">1.0</div>
+                <div class="stat-sub">multiplier</div>
+            </div>
+        </div>
+
+        <div class="reveal">
+            <div class="section-head">
+                <div class="section-title">// Active Brands</div>
+                <div class="section-count" id="brandCount">— nodes</div>
+            </div>
+            <div class="brand-grid" id="brandGrid">
+                <div class="state-msg"><div class="spinner"></div><p>Loading signal…</p></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="universe-orb-container">
+        <div class="orb-label">GO TO UNIVERSE</div>
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <canvas id="universe-canvas"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="scripts/firebase-config.js"></script>
+
+    <script>
+    /* ── ORB ── */
+    let orbScene, orbCamera, orbRenderer, orbSphere, orbWire, orbT = 0;
+    let orbHovered = false;
+
+    function initOrb() {
+        const canvas = document.getElementById('universe-canvas');
+        const sz = parseInt(getComputedStyle(document.getElementById('universe-orb-container')).width) || 100;
+        orbScene  = new THREE.Scene();
+        orbCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        orbCamera.position.z = 3;
+        orbRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        orbRenderer.setSize(sz, sz);
+        orbRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+        orbSphere = new THREE.Mesh(new THREE.SphereGeometry(1,48,48), new THREE.MeshStandardMaterial({ color:0x0a1e36, emissive:0x0a3a6e, emissiveIntensity:.6, metalness:.8, roughness:.3, transparent:true, opacity:.95 }));
+        orbScene.add(orbSphere);
+        orbWire = new THREE.Mesh(new THREE.SphereGeometry(1.01,16,12), new THREE.MeshBasicMaterial({ color:0x4ECAFF, wireframe:true, transparent:true, opacity:.1 }));
+        orbScene.add(orbWire);
+        orbScene.add(new THREE.Mesh(new THREE.SphereGeometry(1.18,32,32), new THREE.MeshBasicMaterial({ color:0x4ECAFF, transparent:true, opacity:.05, side:THREE.BackSide })));
+        orbScene.add(new THREE.AmbientLight(0xffffff,.3));
+        const pl = new THREE.PointLight(0x4ECAFF,3,10); pl.position.set(2,1.5,2); orbScene.add(pl);
+        const gl = new THREE.PointLight(0xC6A75E,1.5,8); gl.position.set(-2,-1,1); orbScene.add(gl);
+
+        animOrb();
+
+        const c = document.getElementById('universe-orb-container');
+        c.addEventListener('mouseenter', () => { orbHovered = true; if (orbSphere) orbSphere.material.emissiveIntensity = 1.8; });
+        c.addEventListener('mouseleave', () => { orbHovered = false; if (orbSphere) orbSphere.material.emissiveIntensity = .6; });
+        c.addEventListener('click', () => window.location.href = 'brand-universe.html');
+        c.addEventListener('touchstart', () => window.location.href = 'brand-universe.html', { passive: true });
+    }
+
+    function animOrb() {
+        requestAnimationFrame(animOrb);
+        const s = orbHovered ? 4.5 : 1;
+        orbT += .008 * s;
+        orbSphere.rotation.y += .006 * s; orbSphere.rotation.x = Math.sin(orbT*.5) * (orbHovered?.3:.15);
+        orbWire.rotation.y -= .003 * s; orbWire.rotation.x = Math.cos(orbT*.4) * (orbHovered?.18:.08);
+        orbRenderer.render(orbScene, orbCamera);
+    }
+
+    /* ── FIREBASE ── */
+    let currentUser = null, userData = null;
+
+    firebase.auth().onAuthStateChanged(async user => {
+        if (!user) { window.location.href = 'index.html'; return; }
+        currentUser = user;
+        document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/40';
+        await loadUser();
+        await loadBrands();
+    });
+
+    async function loadUser() {
+        const doc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+        if (!doc.exists) { window.location.href = 'user-onboarding.html'; return; }
+        userData = doc.data();
+        renderProfile(); renderStats();
+        firebase.firestore().collection('users').doc(currentUser.uid).onSnapshot(d => { userData = d.data(); renderStats(); });
+    }
+
+    function renderProfile() {
+        const u = userData;
+        const username = u.username || u.displayName || currentUser.displayName || 'User';
+        const handle   = u.username ? '@' + u.username : '@' + (currentUser.displayName || 'user');
+        document.getElementById('navUsername').textContent = handle;
+        document.getElementById('userEmail').textContent   = currentUser.email;
+        document.getElementById('welcomeName').textContent = username;
+        document.getElementById('welcomeSub').textContent  = handle + '  ·  Member since ' +
+            (u.createdAt ? new Date(u.createdAt.seconds*1000).toLocaleDateString('en-US',{month:'long',year:'numeric'}) : 'the Universe');
+    }
+
+    function renderStats() {
+        const u = userData;
+        const coins     = u.coins           || 0;
+        const clicks    = u.totalClicks     || 0;
+        const engage    = u.engagementScore || 0;
+        const influence = Math.max(1, (clicks*.1) + (coins*.05) + (engage*.2));
+        const rank      = coins >= 2000 ? 'platinum' : coins >= 500 ? 'gold' : coins >= 100 ? 'silver' : 'bronze';
+        document.getElementById('coinsVal').textContent    = coins.toLocaleString();
+        document.getElementById('clicksVal').textContent   = clicks.toLocaleString();
+        document.getElementById('engageVal').textContent   = engage.toLocaleString();
+        document.getElementById('influenceVal').textContent = influence.toFixed(1);
+        const pill = document.getElementById('rankPill');
+        pill.textContent = rank.toUpperCase(); pill.className = 'rank-pill rank-' + rank;
+    }
+
+    async function loadBrands() {
+        const snap = await firebase.firestore().collection('brands').where('activationStatus','==','active').limit(24).get();
+        const grid = document.getElementById('brandGrid');
+        document.getElementById('brandCount').textContent = snap.size + ' nodes';
+        if (snap.empty) { grid.innerHTML = '<div class="state-msg"><p>No active brands yet</p></div>'; return; }
+        grid.innerHTML = '';
+        snap.forEach(doc => grid.appendChild(buildCard(doc.data(), doc.id)));
+    }
+
+    function buildCard(b, id) {
+        const div = document.createElement('div');
+        div.className = 'brand-card';
+        div.innerHTML = `
+            <div class="card-top">
+                <img src="${b.photoURL || 'https://via.placeholder.com/42'}" alt="" class="card-avatar">
+                <div>
+                    <div class="card-name">${b.brandName}${b.verifiedBadge ? '<span class="card-verified">✓</span>' : ''}</div>
+                    <div class="card-handle">@${b.username || '—'}</div>
+                </div>
+            </div>
+            <div class="card-stats">
+                <div class="card-stat-item"><span class="card-stat-num">${(b.clickCount||0).toLocaleString()}</span><span class="card-stat-label">clicks</span></div>
+                <div class="card-stat-item"><span class="card-stat-num">${(b.engagementScore||0).toLocaleString()}</span><span class="card-stat-label">engage</span></div>
+            </div>
+            <button class="btn-support" onclick="supportBrand('${id}','${b.brandName}',this)">SUPPORT BRAND</button>
+        `;
+        return div;
+    }
+
+    async function supportBrand(brandId, name, btn) {
+        btn.disabled = true; btn.textContent = 'PROCESSING…';
+        try {
+            await firebase.firestore().runTransaction(async tx => {
+                const bRef = firebase.firestore().collection('brands').doc(brandId);
+                const uRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                const [bDoc, uDoc] = await Promise.all([tx.get(bRef), tx.get(uRef)]);
+                if (!bDoc.exists || !uDoc.exists) throw new Error('not found');
+                tx.update(bRef, { clickCount: firebase.firestore.FieldValue.increment(1), engagementScore: firebase.firestore.FieldValue.increment(1) });
+                tx.update(uRef, { totalClicks: firebase.firestore.FieldValue.increment(1), coins: firebase.firestore.FieldValue.increment(10), engagementScore: firebase.firestore.FieldValue.increment(1) });
+            });
+            btn.textContent = '✓ SUPPORTED'; btn.classList.add('done');
+            setTimeout(() => { btn.textContent = 'SUPPORT BRAND'; btn.classList.remove('done'); btn.disabled = false; }, 2500);
+        } catch(e) { console.error(e); btn.textContent = 'SUPPORT BRAND'; btn.disabled = false; }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => { await firebase.auth().signOut(); window.location.href = 'index.html'; });
+    window.addEventListener('load', initOrb);
+    </script>
+</body>
+</html>

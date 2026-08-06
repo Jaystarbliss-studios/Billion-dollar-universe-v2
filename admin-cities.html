@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Worlds Management — Billion Dollar Universe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C6A85E;
+      --gold-dim:    rgba(198,168,94,0.18);
+      --gold-glow:   rgba(198,168,94,0.35);
+      --cyan:        #4ECAFF;
+      --cyan-dim:    rgba(78,202,255,0.12);
+      --red:         #FF4060;
+      --green:       #00F5A0;
+      --purple:      #B347E6;
+      --panel:       rgba(4,10,22,0.88);
+      --edge:        rgba(78,202,255,0.14);
+      --bg:          #020610;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: #d0e8f8;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(198,168,94,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(78,202,255,0.04) 0%, transparent 60%),
+        #000;
+    }
+
+    /* ── LAYOUT ── */
+    .shell {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 56px 1fr;
+      min-height: 100vh;
+    }
+    @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(2,6,16,0.85);
+      border-bottom: 1px solid var(--edge);
+      backdrop-filter: blur(16px);
+      position: sticky; top: 0; z-index: 200;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo { width: 28px; height: auto; }
+    .topbar-brand {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 2.5px; color: rgba(255,255,255,0.7);
+    }
+    .topbar-divider { width: 1px; height: 20px; background: var(--edge); }
+    .topbar-tag {
+      font-family: 'Orbitron', monospace;
+      font-size: 8px; letter-spacing: 2px;
+      color: var(--cyan); opacity: 0.8;
+      border: 1px solid rgba(78,202,255,0.25);
+      padding: 3px 10px; border-radius: 2px;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .tb-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: rgba(255,255,255,0.3);
+    }
+    .tb-user { display: flex; align-items: center; gap: 9px; }
+    .tb-avatar {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: 1.5px solid var(--cyan);
+      object-fit: cover;
+      box-shadow: 0 0 12px rgba(78,202,255,0.3);
+    }
+    .tb-name {
+      font-family: 'Orbitron', monospace;
+      font-size: 9px; letter-spacing: 1.5px; color: var(--cyan);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: rgba(2,6,18,0.92);
+      border-right: 1px solid var(--edge);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar::before {
+      content: ''; display: block; height: 2px; flex-shrink: 0;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--gold), var(--cyan), transparent);
+      background-size: 200% 100%; animation: scanBar 3s linear infinite;
+    }
+    @keyframes scanBar { 0%{background-position:-200% center} 100%{background-position:200% center} }
+
+    .sb-section { padding: 20px 16px 8px; }
+    .sb-section-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 7px; letter-spacing: 2.5px;
+      color: rgba(180,210,230,0.28); font-weight: 700;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .sb-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 5px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+      color: rgba(200,225,240,0.65);
+      border: 1px solid transparent;
+      cursor: pointer; transition: all 0.18s;
+      margin-bottom: 2px; text-decoration: none;
+    }
+    .sb-link:hover {
+      background: var(--cyan-dim);
+      border-color: var(--edge);
+      color: #fff; padding-left: 16px;
+    }
+    .sb-link.active {
+      background: var(--gold-dim);
+      border-color: rgba(198,168,94,0.3);
+      color: var(--gold);
+    }
+    .sb-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+    .sb-badge {
+      margin-left: auto;
+      font-family: 'Orbitron', monospace;
+      font-size: 7px; letter-spacing: 1px; font-weight: 700;
+      padding: 2px 7px; border-radius: 2px;
+    }
+    .badge-gold   { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(198,168,94,0.3); }
+    .badge-cyan   { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(78,202,255,0.25); }
+    .badge-red    { background: rgba(255,64,96,0.1); color: var(--red); border: 1px solid rgba(255,64,96,0.3); }
+    .badge-green  { background: rgba(0,245,160,0.08); color: var(--green); border: 1px solid rgba(0,245,160,0.25); }
+    .sb-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--edge), transparent); margin: 6px 16px; }
+    .sb-logout {
+      margin: auto 16px 20px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 5px;
+      border: 1px solid rgba(255,64,96,0.2);
+      color: var(--red); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+    }
+    .sb-logout:hover { background: rgba(255,64,96,0.08); border-color: rgba(255,64,96,0.4); }
+
+    /* ── MAIN ── */
+    .main {
+      overflow-y: auto;
+      padding: 28px 28px 48px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .page-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px; font-weight: 900; letter-spacing: 1.5px;
+      color: #fff; text-shadow: 0 0 30px var(--gold-glow);
+    }
+    .page-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: rgba(180,210,230,0.35);
+      letter-spacing: 1px; margin-top: 5px;
+    }
+    .page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      font-family: 'Orbitron', monospace; font-size: 8px;
+      font-weight: 700; letter-spacing: 1.5px;
+      padding: 10px 18px; border-radius: 4px; border: none;
+      cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #C6A85E, #9a7a3a);
+      color: #050805; box-shadow: 0 4px 20px rgba(198,168,94,0.3);
+    }
+    .btn-gold:hover { box-shadow: 0 6px 28px rgba(198,168,94,0.5); transform: translateY(-1px); }
+    .btn-cyan {
+      background: linear-gradient(135deg, #4ECAFF, #3BAFCC);
+      color: #0a0a0a; box-shadow: 0 4px 20px rgba(78,202,255,0.3);
+    }
+    .btn-cyan:hover { box-shadow: 0 6px 28px rgba(78,202,255,0.5); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent; color: var(--cyan);
+      border: 1px solid rgba(78,202,255,0.3);
+    }
+    .btn-ghost:hover { background: var(--cyan-dim); border-color: var(--cyan); }
+    .btn-red {
+      background: rgba(255,64,96,0.15); color: var(--red);
+      border: 1px solid rgba(255,64,96,0.3);
+    }
+    .btn-red:hover { background: rgba(255,64,96,0.25); }
+
+    /* ── STATS GRID ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .stat-card {
+      background: rgba(4,10,24,0.7);
+      border: 1px solid var(--edge);
+      border-radius: 8px; padding: 20px 22px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent, var(--gold)), transparent);
+    }
+    .stat-card:hover {
+      border-color: rgba(78,202,255,0.25);
+      box-shadow: 0 0 24px rgba(78,202,255,0.06);
+    }
+    .stat-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 7.5px; letter-spacing: 2px;
+      color: rgba(180,210,230,0.4); margin-bottom: 10px;
+    }
+    .stat-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px; font-weight: 900; letter-spacing: -0.5px;
+      color: #fff; line-height: 1;
+    }
+    .stat-value.loading { color: rgba(255,255,255,0.15); }
+    .stat-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: rgba(180,210,230,0.3);
+      margin-top: 6px; letter-spacing: 0.5px;
+    }
+    .stat-icon {
+      position: absolute; right: 16px; top: 16px;
+      font-size: 22px; opacity: 0.12;
+    }
+    .stat-delta {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      padding: 2px 7px; border-radius: 2px; margin-top: 6px;
+    }
+    .delta-up   { background: rgba(0,245,160,0.08); color: var(--green); }
+    .delta-warn { background: rgba(255,200,0,0.08); color: #FFD060; }
+
+    /* ── PANEL ── */
+    .panel {
+      background: rgba(4,10,24,0.7);
+      border: 1px solid var(--edge);
+      border-radius: 8px; overflow: hidden;
+    }
+    .panel-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--edge);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px; letter-spacing: 2px; color: rgba(180,210,230,0.7);
+    }
+    .panel-action {
+      font-family: 'Orbitron', monospace; font-size: 7px;
+      letter-spacing: 1.5px; color: var(--cyan); cursor: pointer;
+      transition: color 0.18s; text-decoration: none;
+    }
+    .panel-action:hover { color: #fff; }
+    .panel-body { padding: 20px; }
+
+    /* ── CITY LIST ── */
+    .city-list { display: flex; flex-direction: column; gap: 12px; }
+    .city-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      transition: all 0.18s;
+    }
+    .city-item:hover {
+      background: var(--cyan-dim);
+      border-color: rgba(78,202,255,0.2);
+    }
+    .city-name-cell {
+      font-size: 15px; font-weight: 700;
+      color: rgba(220,235,255,0.9);
+    }
+    .city-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: rgba(180,210,230,0.4);
+    }
+    .city-status {
+      font-family: 'Orbitron', monospace;
+      font-size: 8px; letter-spacing: 1.5px;
+      padding: 4px 10px; border-radius: 3px;
+      font-weight: 700; white-space: nowrap;
+    }
+    .status-upcoming { background: rgba(78,202,255,0.1); color: var(--cyan); border: 1px solid rgba(78,202,255,0.3); }
+    .status-active   { background: rgba(0,245,160,0.1); color: var(--green); border: 1px solid rgba(0,245,160,0.3); }
+    .status-filling  { background: rgba(198,168,94,0.15); color: var(--gold); border: 1px solid rgba(198,168,94,0.3); }
+    .status-archived { background: rgba(255,255,255,0.05); color: rgba(180,210,230,0.4); border: 1px solid rgba(255,255,255,0.15); }
+    .city-stats {
+      text-align: right;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: rgba(180,210,230,0.5);
+    }
+    .city-actions {
+      display: flex; gap: 6px;
+    }
+    .action-icon {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(200,225,240,0.6);
+      cursor: pointer; transition: all 0.18s;
+      font-size: 13px;
+    }
+    .action-icon:hover {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .action-icon.danger:hover {
+      background: rgba(255,64,96,0.1);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ── MODAL ── */
+    .modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--panel);
+      border: 1px solid var(--edge);
+      border-radius: 12px;
+      width: 100%; max-width: 580px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--edge);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px; font-weight: 700; color: #fff;
+      letter-spacing: 1.5px;
+    }
+    .modal-close {
+      background: none; border: none;
+      color: rgba(255,255,255,0.4); font-size: 24px;
+      cursor: pointer; transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--red); }
+    .modal-body { padding: 24px; }
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; margin-bottom: 8px;
+      font-family: 'Orbitron', monospace;
+      font-size: 8px; letter-spacing: 1.5px;
+      color: rgba(180,210,230,0.6);
+      text-transform: uppercase;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--edge);
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(78,202,255,0.08);
+    }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .modal-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--edge);
+      display: flex; justify-content: flex-end; gap: 10px;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 5000; opacity: 0; pointer-events: none;
+      transition: all 0.4s ease; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast-inner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px;
+      background: rgba(4,12,28,0.9);
+      border: 1px solid rgba(198,168,94,0.3);
+      border-radius: 5px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(198,168,94,0.1);
+      backdrop-filter: blur(16px);
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      letter-spacing: 1.5px; color: var(--gold);
+    }
+
+    /* ── LOADING ── */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      transition: opacity 0.6s ease;
+    }
+    #loading-screen.done { opacity: 0; pointer-events: none; }
+    .ld-ring {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid rgba(198,168,94,0.15);
+      border-top-color: var(--gold);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ld-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; letter-spacing: 4px; color: var(--cyan);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .sidebar { display: none; } }
+    @media (max-width: 768px) {
+      .city-item {
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+      }
+      .city-stats { display: none; }
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .main { padding: 16px 16px 40px; }
+      .city-actions { flex-direction: column; }
+      .action-icon { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="ld-ring"></div>
+  <div class="ld-text">LOADING CITIES</div>
+</div>
+
+<div id="toast"><div class="toast-inner" id="toast-text"></div></div>
+
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <img src="assets/images/logo.png" alt="Logo" class="topbar-logo" onerror="this.style.display='none'">
+      <span class="topbar-brand">Billion Dollar Universe</span>
+      <div class="topbar-divider"></div>
+      <span class="topbar-tag">CITY WORLDS</span>
+    </div>
+    <div class="topbar-right">
+      <span class="tb-time" id="live-time">—</span>
+      <div class="tb-user">
+        <img id="admin-avatar" src="" alt="Admin" class="tb-avatar">
+        <span class="tb-name" id="admin-name">ADMIN</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-section-label">// Overview</div>
+      <a class="sb-link" href="admin-home.html">
+        <span class="sb-icon">⌂</span> Admin Home
+      </a>
+      <a class="sb-link" href="brand-universe.html">
+        <span class="sb-icon">◎</span> Universe Map
+        <span class="sb-badge badge-cyan">LIVE</span>
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">// Management</div>
+      <a class="sb-link" href="admin-dashboard.html">
+        <span class="sb-icon">⊞</span> Admin Panel
+      </a>
+      <a class="sb-link" href="admin-users.html">
+        <span class="sb-icon">👥</span> Manage Users
+      </a>
+      <a class="sb-link" href="admin-brands.html">
+        <span class="sb-icon">🏷</span> Manage Brands
+        <span class="sb-badge badge-gold" id="sb-pend-count">—</span>
+      </a>
+      <a class="sb-link" href="admin-slots.html">
+        <span class="sb-icon">▦</span> All Slots
+      </a>
+      <a class="sb-link active" href="admin-cities.html">
+        <span class="sb-icon">🌍</span> City Worlds
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">// Analytics</div>
+      <a class="sb-link" href="admin-leaderboard.html">
+        <span class="sb-icon">⬡</span> Leaderboard
+      </a>
+      <a class="sb-link" href="admin-analytics.html">
+        <span class="sb-icon">📊</span> Analytics
+        <span class="sb-badge badge-cyan">SOON</span>
+      </a>
+      <a class="sb-link" href="admin-ads.html">
+        <span class="sb-icon">▶</span> Review Ads
+      </a>
+      <a class="sb-link" href="admin-reports.html">
+        <span class="sb-icon">⚑</span> Reports
+      </a>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-logout" id="logout-btn">
+      <span>⏻</span> LOGOUT
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">CITY WORLDS MANAGEMENT</div>
+        <div class="page-sub" id="admin-handle">// @admin · SYSTEM OPERATOR</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost" onclick="refreshData()">↻ REFRESH</button>
+        <button class="btn btn-cyan" onclick="openCreateModal()">+ NEW CITY</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent: var(--cyan)">
+        <div class="stat-icon">🌍</div>
+        <div class="stat-label">TOTAL CITIES</div>
+        <div class="stat-value loading" id="stat-total-cities">—</div>
+        <div class="stat-sub">Created cities</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--green)">
+        <div class="stat-icon">🚀</div>
+        <div class="stat-label">ACTIVE CITIES</div>
+        <div class="stat-value loading" id="stat-active-cities">—</div>
+        <div class="stat-sub">Currently live</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--gold)">
+        <div class="stat-icon">📦</div>
+        <div class="stat-label">TOTAL PARCELS</div>
+        <div class="stat-value loading" id="stat-total-parcels">—</div>
+        <div class="stat-sub">Across all cities</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--purple)">
+        <div class="stat-icon">✓</div>
+        <div class="stat-label">SOLD PARCELS</div>
+        <div class="stat-value loading" id="stat-sold-parcels">—</div>
+        <div class="stat-sub">Owned by users</div>
+      </div>
+    </div>
+
+    <!-- City List Panel -->
+    <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+      <div class="panel-head">
+        <span class="panel-title">ALL CITIES</span>
+        <span class="panel-action" onclick="refreshData()">REFRESH</span>
+      </div>
+      <div class="panel-body" style="flex: 1; overflow: auto;">
+        <div class="city-list" id="city-list">
+          <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3);">
+            Loading cities...
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Create/Edit City Modal -->
+<div class="modal" id="cityModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-title">Create New City</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="cityForm">
+        <input type="hidden" id="city-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">City Name</label>
+            <input type="text" class="form-input" id="city-name" placeholder="e.g., New York" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <input type="text" class="form-input" id="city-country" placeholder="e.g., USA" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="city-status" required>
+              <option value="UPCOMING">UPCOMING</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="FILLING">FILLING</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parcel Count</label>
+            <input type="number" class="form-input" id="city-parcel-count" placeholder="100" min="1" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Release Date (optional)</label>
+            <input type="datetime-local" class="form-input" id="city-release-date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unlock Trigger</label>
+            <select class="form-select" id="city-unlock-trigger">
+              <option value="time">Time-based</option>
+              <option value="fill">Fill-based</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">City Bounds (for map display)</label>
+          <div class="form-row">
+            <input type="number" class="form-input" id="bounds-west" placeholder="West (lon)" step="0.0001">
+            <input type="number" class="form-input" id="bounds-south" placeholder="South (lat)" step="0.0001">
+          </div>
+          <div style="height: 8px;"></div>
+          <div class="form-row">
+            <input type="number" class="form-input" id="bounds-east" placeholder="East (lon)" step="0.0001">
+            <input type="number" class="form-input" id="bounds-north" placeholder="North (lat)" step="0.0001">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <textarea class="form-textarea" id="city-notes" placeholder="Any additional notes..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveCity()">SAVE CITY</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Parcels Confirmation Modal -->
+<div class="modal" id="generateModal">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Generate Parcels</h2>
+      <button class="modal-close" onclick="closeGenerateModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 16px; color: rgba(180,210,230,0.6);">
+        This will generate <strong><span id="generate-count">0</span></strong> parcels for
+        <strong><span id="generate-city-name">—</span></strong>.
+        The parcels will cover the defined city bounds with a grid.
+      </p>
+      <p style="font-size: 12px; color: rgba(180,210,230,0.4);">
+        ⚠️ This action may take a few moments. Existing parcels will be overwritten.
+      </p>
+      <input type="hidden" id="generate-city-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeGenerateModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="generateParcels()">GENERATE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="scripts/firebase-config.js"></script>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// ADMIN EMAIL & AUTH GUARD
+// ──────────────────────────────────────────────────────────────
+const ADMIN_EMAIL = 'johnrufai242@gmail.com';
+
+function isAdminUser(user) {
+  return user.email === ADMIN_EMAIL;
+}
+
+// ──────────────────────────────────────────────────────────────
+// LIVE CLOCK
+// ──────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('live-time').textContent =
+    new Date().toLocaleTimeString('en-GB', { hour12: false });
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ──────────────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────────────
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ──────────────────────────────────────────────────────────────
+// DATA MANAGEMENT
+// ──────────────────────────────────────────────────────────────
+let citiesCache = [];
+
+async function loadCities() {
+  const db = firebase.firestore();
+  try {
+    const snap = await db.collection('cities').orderBy('createdAt', 'desc').get();
+    citiesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Calculate totals
+    const totalCities = citiesCache.length;
+    const activeCities = citiesCache.filter(c => c.status === 'ACTIVE' || c.status === 'FILLING').length;
+    const totalParcels = citiesCache.reduce((sum, c) => sum + (c.parcelCount || 0), 0);
+    const soldParcels = citiesCache.reduce((sum, c) => sum + (c.soldCount || 0), 0);
+
+    // Update stats
+    document.getElementById('stat-total-cities').textContent = totalCities;
+    document.getElementById('stat-total-cities').classList.remove('loading');
+    document.getElementById('stat-active-cities').textContent = activeCities;
+    document.getElementById('stat-active-cities').classList.remove('loading');
+    document.getElementById('stat-total-parcels').textContent = totalParcels.toLocaleString();
+    document.getElementById('stat-total-parcels').classList.remove('loading');
+    document.getElementById('stat-sold-parcels').textContent = soldParcels.toLocaleString();
+    document.getElementById('stat-sold-parcels').classList.remove('loading');
+
+    // Render list
+    renderCityList(citiesCache);
+
+  } catch (err) {
+    console.error('Error loading cities:', err);
+    toast('Error loading cities');
+  }
+}
+
+function renderCityList(cities) {
+  const list = document.getElementById('city-list');
+  if (cities.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">
+        No cities yet. Create one to get started.
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = cities.map(city => `
+    <div class="city-item">
+      <div class="city-name-cell">
+        ${city.name}, ${city.country || 'Unknown'}
+        <div class="city-meta" style="margin-top:4px;">ID: ${city.id}</div>
+      </div>
+      <div class="city-meta city-stats">
+        ${city.parcelCount || 0} parcels<br>
+        ${city.soldCount || 0} sold
+      </div>
+      <div>
+        <span class="city-status status-${city.status.toLowerCase()}">${city.status}</span>
+      </div>
+      <div class="city-stats">
+        ${city.parcelCount > 0 ? Math.round((city.soldCount || 0) / city.parcelCount * 100) : 0}%
+      </div>
+      <div class="city-actions">
+        <button class="action-icon" onclick="editCity('${city.id}')" title="Edit City">✎</button>
+        <button class="action-icon" onclick="openGenerateModal('${city.id}')" title="Generate Parcels">⚙</button>
+        <button class="action-icon danger" onclick="deleteCity('${city.id}', '${city.name}')" title="Delete City">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// MODAL: CREATE/EDIT CITY
+// ──────────────────────────────────────────────────────────────
+let editingCityId = null;
+
+function openCreateModal() {
+  editingCityId = null;
+  document.getElementById('cityForm').reset();
+  document.getElementById('modal-title').textContent = 'Create New City';
+  document.getElementById('cityModal').classList.add('active');
+}
+
+function editCity(cityId) {
+  const city = citiesCache.find(c => c.id === cityId);
+  if (!city) return;
+
+  editingCityId = cityId;
+  document.getElementById('modal-title').textContent = 'Edit City';
+  document.getElementById('city-name').value = city.name || '';
+  document.getElementById('city-country').value = city.country || '';
+  document.getElementById('city-status').value = city.status || 'UPCOMING';
+  document.getElementById('city-parcel-count').value = city.parcelCount || '';
+  document.getElementById('city-unlock-trigger').value = city.unlockTrigger || 'time';
+  document.getElementById('city-notes').value = city.notes || '';
+
+  if (city.releaseDate) {
+    const date = city.releaseDate.toDate ? city.releaseDate.toDate() : new Date(city.releaseDate);
+    document.getElementById('city-release-date').value = date.toISOString().slice(0, 16);
+  }
+
+  if (city.bounds) {
+    document.getElementById('bounds-west').value = city.bounds.west || '';
+    document.getElementById('bounds-south').value = city.bounds.south || '';
+    document.getElementById('bounds-east').value = city.bounds.east || '';
+    document.getElementById('bounds-north').value = city.bounds.north || '';
+  }
+
+  document.getElementById('cityModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('cityModal').classList.remove('active');
+  editingCityId = null;
+}
+
+async function saveCity() {
+  const name = document.getElementById('city-name').value.trim();
+  const country = document.getElementById('city-country').value.trim();
+  const status = document.getElementById('city-status').value;
+  const parcelCount = parseInt(document.getElementById('city-parcel-count').value);
+  const unlockTrigger = document.getElementById('city-unlock-trigger').value;
+  const notes = document.getElementById('city-notes').value.trim();
+  const releaseDate = document.getElementById('city-release-date').value;
+
+  if (!name || !country || isNaN(parcelCount) || parcelCount < 1) {
+    toast('Please fill in all required fields correctly');
+    return;
+  }
+
+  const db = firebase.firestore();
+  const cityData = {
+    name,
+    country,
+    status,
+    parcelCount,
+    unlockTrigger,
+    notes,
+    bounds: {
+      west: parseFloat(document.getElementById('bounds-west').value) || -74.0,
+      south: parseFloat(document.getElementById('bounds-south').value) || 40.7,
+      east: parseFloat(document.getElementById('bounds-east').value) || -73.9,
+      north: parseFloat(document.getElementById('bounds-north').value) || 40.8,
+    },
+    soldCount: 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (releaseDate) {
+    cityData.releaseDate = firebase.firestore.Timestamp.fromDate(new Date(releaseDate));
+  }
+
+  try {
+    if (editingCityId) {
+      // Update existing city
+      const cityRef = db.collection('cities').doc(editingCityId);
+      await cityRef.update(cityData);
+      toast('City updated successfully');
+    } else {
+      // Create new city
+      cityData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const cityRef = await db.collection('cities').add(cityData);
+      toast(`City "${name}" created with ID: ${cityRef.id}`);
+    }
+
+    closeModal();
+    await loadCities();
+  } catch (err) {
+    console.error('Error saving city:', err);
+    toast('Error saving city: ' + err.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// GENERATE PARCELS
+// ──────────────────────────────────────────────────────────────
+function openGenerateModal(cityId) {
+  const city = citiesCache.find(c => c.id === cityId);
+  if (!city) return;
+
+  document.getElementById('generate-city-id').value = cityId;
+  document.getElementById('generate-city-name').textContent = city.name;
+  document.getElementById('generate-count').textContent = city.parcelCount || '?';
+  document.getElementById('generateModal').classList.add('active');
+}
+
+function closeGenerateModal() {
+  document.getElementById('generateModal').classList.remove('active');
+}
+
+async function generateParcels() {
+  const cityId = document.getElementById('generate-city-id').value;
+  const city = citiesCache.find(c => c.id === cityId);
+  if (!city) return;
+
+  closeGenerateModal();
+  toast(`Generating parcels for ${city.name}...`);
+
+  try {
+    // Call Cloud Function to generate parcels
+    const generateFn = firebase.functions().httpsCallable('generateCityParcels');
+    const result = await generateFn({
+      cityId: cityId,
+      parcelCount: city.parcelCount,
+      bounds: city.bounds
+    });
+
+    if (result.data?.success) {
+      toast(`✓ Generated ${result.data.parcelCount} parcels for ${city.name}`);
+      await loadCities();
+    } else {
+      throw new Error(result.data?.error || 'Generation failed');
+    }
+  } catch (err) {
+    console.error('Parcel generation error:', err);
+    toast('Error generating parcels: ' + err.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// DELETE CITY
+// ──────────────────────────────────────────────────────────────
+async function deleteCity(cityId, cityName) {
+  if (!confirm(`Delete "${cityName}"? This will permanently remove the city and all its parcels. This action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    toast('Deleting...');
+    const db = firebase.firestore();
+    const cityRef = db.collection('cities').doc(cityId);
+
+    // Delete parcels subcollection first
+    const parcelsSnap = await cityRef.collection('parcels').get();
+    const batch = db.batch();
+    parcelsSnap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    // Delete city document
+    await cityRef.delete();
+
+    toast('City deleted');
+    await loadCities();
+  } catch (err) {
+    console.error('Error deleting city:', err);
+    toast('Error deleting city: ' + err.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// REFRESH DATA
+// ──────────────────────────────────────────────────────────────
+async function refreshData() {
+  toast('Refreshing...');
+  await loadCities();
+}
+
+// ──────────────────────────────────────────────────────────────
+// AUTH GUARD & INIT
+// ──────────────────────────────────────────────────────────────
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await firebase.auth().signOut();
+  window.location.href = 'index.html';
+});
+
+window.addEventListener('load', () => {
+  const unsub = firebase.auth().onAuthStateChanged(async user => {
+    unsub();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    // Admin check
+    let isAdmin = isAdminUser(user);
+    if (!isAdmin) {
+      try {
+        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().role === 'admin') isAdmin = true;
+      } catch (e) { /* ignore */ }
+    }
+
+    if (!isAdmin) {
+      alert('Access denied. Admin only.');
+      firebase.auth().signOut().finally(() => { window.location.href = 'index.html'; });
+      return;
+    }
+
+    // Populate profile
+    let photoURL = user.photoURL || '';
+    let name = user.displayName || 'Admin';
+    let handle = '@' + (user.email?.split('@')[0] || 'admin');
+    try {
+      const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        const d = doc.data();
+        photoURL = d.photoURL || photoURL;
+        name = d.username || d.fullName || name;
+        handle = '@' + (d.username || d.email?.split('@')[0] || 'admin');
+      }
+    } catch (e) { /* use auth defaults */ }
+
+    document.getElementById('admin-avatar').src = photoURL || 'https://via.placeholder.com/32';
+    document.getElementById('admin-name').textContent = name.toUpperCase().slice(0, 14);
+    document.getElementById('admin-handle').textContent = `// ${handle} · SYSTEM OPERATOR`;
+
+    // Load city data
+    await loadCities();
+
+    // Hide loading screen
+    document.getElementById('loading-screen').classList.add('done');
+  });
+});
+</script>
+
+</body>
+</html>

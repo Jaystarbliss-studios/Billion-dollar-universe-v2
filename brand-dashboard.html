@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Brand Command — Billion Dollar Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black:      #040608;
+            --panel:      rgba(8,18,32,0.75);
+            --panel-edge: rgba(100,185,255,0.12);
+            --gold:       #C6A75E;
+            --gold-dim:   rgba(198,167,94,0.18);
+            --gold-glow:  rgba(198,167,94,0.35);
+            --cyan:       #4ECAFF;
+            --cyan-dim:   rgba(78,202,255,0.12);
+            --green:      #00F5A0;
+            --red:        #FF4060;
+            --text:       #D8E8F0;
+            --text-muted: rgba(180,210,230,0.45);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--black); color: var(--text);
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(78,202,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(78,202,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none; z-index: 0;
+        }
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0.4; animation: scanDown 8s linear infinite;
+            pointer-events: none; z-index: 1;
+        }
+        @keyframes scanDown { 0%{top:0;opacity:.4} 90%{opacity:.4} 100%{top:100vh;opacity:0} }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            position: sticky; top: 0; z-index: 900;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(14px, 3vw, 28px); height: 52px;
+            background: rgba(4,6,8,0.95); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-edge);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; }
+        .nav-brand-text {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(9px, 2vw, 13px); font-weight: 700;
+            letter-spacing: clamp(1px, .5vw, 3px); color: var(--gold);
+            text-shadow: 0 0 20px var(--gold-glow); text-transform: uppercase; white-space: nowrap;
+        }
+        .nav-logo { width: 32px; height: auto; }
+        .nav-right { display: flex; align-items: center; gap: clamp(6px, 1.5vw, 12px); }
+        .nav-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; flex-shrink: 0; }
+        .nav-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .nav-name  { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+        .nav-email { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .btn-logout {
+            font-family: 'Orbitron', monospace; font-size: 8px; letter-spacing: 1.5px;
+            padding: 5px clamp(8px, 1.5vw, 12px); background: transparent;
+            border: 1px solid rgba(255,64,96,0.4); color: var(--red);
+            border-radius: 2px; cursor: pointer; transition: all .2s; white-space: nowrap;
+        }
+        .btn-logout:hover { background: rgba(255,64,96,0.1); box-shadow: 0 0 12px rgba(255,64,96,.2); }
+
+        /* ── SHELL ── */
+        .shell {
+            position: relative; z-index: 2;
+            max-width: 1280px; margin: 0 auto;
+            padding: 20px clamp(12px, 3vw, 24px) 120px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 14px;
+        }
+
+        /* ── PANELS ── */
+        .panel {
+            background: var(--panel); backdrop-filter: blur(16px) saturate(1.4);
+            border: 1px solid var(--panel-edge); border-radius: 4px;
+            position: relative; overflow: hidden;
+        }
+        .panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan-dim), var(--cyan), var(--cyan-dim), transparent); opacity: 0.6;
+        }
+        .panel::after {
+            content: ''; position: absolute; bottom: 0; right: 0;
+            width: 10px; height: 10px;
+            border-bottom: 1px solid rgba(198,167,94,.4); border-right: 1px solid rgba(198,167,94,.4);
+        }
+
+        /* ── IDENTITY SIDEBAR ── */
+        .identity {
+            grid-column: 1; grid-row: 1 / 4;
+            padding: 18px 16px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .id-top { display: flex; align-items: center; gap: 10px; }
+        .brand-avatar { width: 44px; height: 44px; border-radius: 4px; border: 1px solid var(--gold); object-fit: cover; box-shadow: 0 0 14px var(--gold-glow); flex-shrink: 0; }
+        .brand-name   { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: .5px; word-break: break-all; }
+        .brand-handle { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); margin-top: 2px; }
+
+        .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 2px; font-family: 'Orbitron', monospace; font-size: 7.5px; letter-spacing: 1.5px; font-weight: 700; }
+        .status-pill .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+        .status-inactive { background: rgba(180,180,180,.1); color: #888; border: 1px solid rgba(180,180,180,.2); }
+        .status-inactive .dot { background: #666; }
+        .status-active   { background: rgba(0,245,160,.08); color: var(--green); border: 1px solid rgba(0,245,160,.25); }
+        .status-active .dot { background: var(--green); animation: blink 1.5s ease infinite; }
+        .status-verified { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(198,167,94,.35); }
+        .status-verified .dot { background: var(--gold); }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+        .id-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--panel-edge), transparent); }
+        .id-label   { font-family: 'Orbitron', monospace; font-size: 7px; letter-spacing: 2px; color: var(--text-muted); }
+        .id-stat    { display: flex; align-items: baseline; justify-content: space-between; padding: 3px 0; }
+        .id-stat-label { font-size: 11px; color: var(--text-muted); }
+        .id-stat-val   { font-family: 'Orbitron', monospace; font-size: 13px; color: var(--cyan); font-weight: 700; }
+
+        /* ── ACTIVATION BANNER ── */
+        .activation {
+            grid-column: 2; grid-row: 1;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, rgba(198,167,94,.06), rgba(198,167,94,.02));
+            border-color: rgba(198,167,94,.35);
+            display: none; gap: 16px; align-items: center; flex-wrap: wrap;
+        }
+        .activation.visible { display: flex; }
+        .activation-text { flex: 1; min-width: 200px; }
+        .activation-text h3 { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; color: var(--gold); margin-bottom: 4px; }
+        .activation-text p  { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .btn-activate {
+            font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; font-weight: 700;
+            padding: 9px 18px; background: var(--gold); color: #000;
+            border: none; border-radius: 2px; cursor: pointer; white-space: nowrap;
+            transition: all .2s; box-shadow: 0 0 20px var(--gold-glow);
+        }
+        .btn-activate:hover { background: #d4b96e; transform: translateY(-1px); }
+
+        /* ── METRICS ── */
+        .metrics {
+            grid-column: 2; grid-row: 2;
+            display: grid; grid-template-columns: repeat(5,1fr); gap: 10px;
+        }
+        .metric {
+            background: var(--panel); backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-edge); border-radius: 3px;
+            padding: clamp(10px, 2vw, 14px) clamp(10px, 2vw, 14px) 10px;
+            position: relative; overflow: hidden; transition: border-color .2s, box-shadow .2s;
+        }
+        .metric:hover { border-color: rgba(78,202,255,.25); box-shadow: 0 0 16px rgba(78,202,255,.06); }
+        .metric::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: .3; }
+        .metric.locked { opacity: .35; pointer-events: none; }
+        .metric.locked::after { content: '⬡'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 24px; opacity: .15; color: var(--cyan); }
+        .metric-tag { font-family: 'Orbitron', monospace; font-size: clamp(6px, 1vw, 7px); letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 5px; }
+        .metric-val { font-family: 'Orbitron', monospace; font-size: clamp(16px, 2.5vw, 22px); font-weight: 700; color: var(--gold); line-height: 1; }
+        .metric-sub { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── ACTIONS ── */
+        .actions {
+            grid-column: 2; grid-row: 3;
+            padding: clamp(12px, 2vw, 16px) clamp(14px, 2.5vw, 20px);
+        }
+        .actions-header { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2.5px; color: var(--text-muted); margin-bottom: 12px; }
+        .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-action {
+            font-family: 'Rajdhani', sans-serif; font-size: clamp(11px, 2vw, 12px); font-weight: 600;
+            padding: 7px clamp(12px, 2vw, 18px); background: transparent;
+            border: 1px solid var(--panel-edge); color: var(--text-muted);
+            border-radius: 2px; cursor: pointer; transition: all .2s; white-space: nowrap;
+        }
+        .btn-action:hover:not(:disabled) { border-color: var(--cyan-dim); color: var(--cyan); background: var(--cyan-dim); }
+        .btn-action:disabled { opacity: .25; cursor: not-allowed; }
+        .btn-action.primary { border-color: rgba(198,167,94,.4); color: var(--gold); }
+        .btn-action.primary:hover:not(:disabled) { background: var(--gold-dim); border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
+
+        /* ── ORB CONTAINER ── */
+        #universe-orb-container {
+            position: fixed; right: clamp(14px,3vw,28px); bottom: clamp(14px,3vw,28px);
+            width: clamp(72px,9vw,100px); height: clamp(72px,9vw,100px);
+            z-index: 1200; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* ── GLASSMORPHIC LABEL ── */
+        .orb-label {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%; transform: translateX(-50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 8px; font-weight: 700; letter-spacing: 2px;
+            color: rgba(78, 202, 255, 0.75);
+            background: rgba(4, 12, 24, 0.45);
+            backdrop-filter: blur(10px) saturate(1.5);
+            -webkit-backdrop-filter: blur(10px) saturate(1.5);
+            border: 1px solid rgba(78, 202, 255, 0.18);
+            border-radius: 4px;
+            padding: 6px 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: labelFloat 3s ease-in-out infinite;
+            box-shadow: 0 0 18px rgba(78,202,255,0.07), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        @keyframes labelFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.75; }
+            50%       { transform: translateX(-50%) translateY(-4px); opacity: 1; }
+        }
+
+        #universe-canvas { width: 100%; height: 100%; display: block; }
+
+        .orb-ring {
+            position: absolute; inset: -6px; border-radius: 50%;
+            border: 1px solid rgba(78,202,255,.2);
+            animation: orbRing 3s linear infinite; pointer-events: none;
+            transition: border-color .25s, inset .25s, box-shadow .25s;
+        }
+        .orb-ring:nth-child(2) { inset: -14px; border-color: rgba(198,167,94,.12); animation-duration: 5s; animation-direction: reverse; }
+        @keyframes orbRing { to { transform: rotate(360deg); } }
+        #universe-orb-container:hover .orb-ring:nth-child(1) { border-color: rgba(78,202,255,.7); inset: -11px; animation-duration: .65s; box-shadow: 0 0 14px rgba(78,202,255,.35); }
+        #universe-orb-container:hover .orb-ring:nth-child(2) { border-color: rgba(198,167,94,.6); inset: -22px; animation-duration: 1.1s; }
+        #universe-orb-container:hover .orb-label { color: rgba(78,202,255,1); border-color: rgba(78,202,255,0.4); box-shadow: 0 0 22px rgba(78,202,255,0.18); }
+
+        /* ── REVEAL ── */
+        .reveal { opacity: 0; transform: translateY(8px); animation: revl .5s ease forwards; }
+        @keyframes revl { to { opacity: 1; transform: none; } }
+        .reveal:nth-child(1){animation-delay:.05s} .reveal:nth-child(2){animation-delay:.1s}
+        .reveal:nth-child(3){animation-delay:.15s} .reveal:nth-child(4){animation-delay:.2s}
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 860px) {
+            .shell { grid-template-columns: 1fr; grid-template-rows: auto; }
+            .identity   { grid-column: 1; grid-row: auto; flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+            .id-top     { min-width: 200px; }
+            .activation { grid-column: 1; grid-row: auto; }
+            .metrics    { grid-column: 1; grid-row: auto; grid-template-columns: repeat(3,1fr); }
+            .actions    { grid-column: 1; grid-row: auto; }
+        }
+        @media (max-width: 560px) {
+            .metrics    { grid-template-columns: repeat(2,1fr); }
+            .identity   { flex-direction: column; }
+            .nav-info   { display: none; }
+        }
+        @media (max-width: 380px) {
+            .metrics    { grid-template-columns: 1fr 1fr; }
+            .btn-action { font-size: 10px; padding: 6px 10px; }
+            .nav-logo   { width: 26px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="assets/images/logo.png" alt="Billion Dollar Universe logo" class="nav-logo">
+            <span class="nav-brand-text">Brand Dashboard</span>
+        </div>
+        <div class="nav-right">
+            <img src="" alt="" class="nav-avatar" id="userAvatar">
+            <div class="nav-info">
+                <div class="nav-name" id="userName">—</div>
+                <div class="nav-email" id="userEmail">—</div>
+            </div>
+            <button class="btn-logout" id="logoutBtn">LOGOUT</button>
+        </div>
+    </nav>
+
+    <div class="shell">
+
+        <div class="panel identity reveal">
+            <div class="id-top">
+                <img src="" alt="" class="brand-avatar" id="brandAvatar">
+                <div>
+                    <div class="brand-name" id="brandName">BRAND</div>
+                    <div class="brand-handle" id="brandHandle">@handle</div>
+                </div>
+            </div>
+            <div id="statusWrap">
+                <span class="status-pill status-inactive" id="statusPill">
+                    <span class="dot"></span> INACTIVE
+                </span>
+            </div>
+            <div class="id-divider"></div>
+            <div class="id-label">Live Metrics</div>
+            <div class="id-stat"><span class="id-stat-label">Clicks</span>     <span class="id-stat-val" id="sideClicks">0</span></div>
+            <div class="id-stat"><span class="id-stat-label">Engagement</span> <span class="id-stat-val" id="sideEngage">0</span></div>
+            <div class="id-stat"><span class="id-stat-label">Coins</span>      <span class="id-stat-val" id="sideCoins">0</span></div>
+            <div class="id-stat"><span class="id-stat-label">Rank</span>       <span class="id-stat-val" id="sideRank">—</span></div>
+        </div>
+
+        <div class="panel activation" id="activationBanner">
+            <div class="activation-text">
+                <h3>SIGNAL OFFLINE: ACTIVATE YOUR BRAND</h3>
+                <p>One-time activation unlocks the universe. Public visibility, rankings, and live metrics. <strong style="color:var(--gold)">₦1,000</strong></p>
+            </div>
+            <button class="btn-activate" id="activateBtn">ACTIVATE NOW</button>
+        </div>
+
+        <div class="metrics reveal">
+            <div class="metric" id="clicksCard">
+                <div class="metric-tag">Total Clicks</div>
+                <div class="metric-val" id="clickCount">0</div>
+                <div class="metric-sub">lifetime</div>
+            </div>
+            <div class="metric" id="engageCard">
+                <div class="metric-tag">Engagement</div>
+                <div class="metric-val" id="engagementScore">0</div>
+                <div class="metric-sub">score</div>
+            </div>
+            <div class="metric" id="coinsCard">
+                <div class="metric-tag">Coins</div>
+                <div class="metric-val" id="coins">0</div>
+                <div class="metric-sub">earned</div>
+            </div>
+            <div class="metric" id="rankCard">
+                <div class="metric-tag">Rank</div>
+                <div class="metric-val" id="rankingPosition">—</div>
+                <div class="metric-sub">global</div>
+            </div>
+            <div class="metric" id="influenceCard">
+                <div class="metric-tag">Influence</div>
+                <div class="metric-val" id="influenceScore">0</div>
+                <div class="metric-sub">power</div>
+            </div>
+        </div>
+
+        <div class="panel actions reveal">
+            <div class="actions-header">Command Interface</div>
+            <div class="action-row">
+                <button class="btn-action primary" id="verifyBtn" disabled>Apply for Verification — ₦5,000</button>
+                <button class="btn-action" id="editProfileBtn">Edit Profile</button>
+                <button class="btn-action" id="viewPublicBtn" disabled>Public Profile</button>
+                <button class="btn-action" id="boostBtn" disabled>Boost Visibility</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="universe-orb-container">
+        <div class="orb-label">GO TO UNIVERSE</div>
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <canvas id="universe-canvas"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="scripts/firebase-config.js"></script>
+
+    <script>
+    /* ── 3D ORB ── */
+    let orbScene, orbCamera, orbRenderer, orbSphere, orbWire, orbTime = 0;
+    let orbHovered = false;
+    const ORB_SIZE = Math.min(Math.max(parseInt(getComputedStyle(document.getElementById('universe-orb-container')).width) || 100, 72), 100);
+
+    function initOrb() {
+        const canvas = document.getElementById('universe-canvas');
+        orbScene  = new THREE.Scene();
+        orbCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        orbCamera.position.z = 3;
+        orbRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        orbRenderer.setSize(ORB_SIZE, ORB_SIZE);
+        orbRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+        const geo = new THREE.SphereGeometry(1, 48, 48);
+        const mat = new THREE.MeshStandardMaterial({ color: 0x0a1e36, emissive: 0x0a3a6e, emissiveIntensity: .6, metalness: .8, roughness: .3, transparent: true, opacity: .95 });
+        orbSphere = new THREE.Mesh(geo, mat);
+        orbScene.add(orbSphere);
+
+        const wGeo = new THREE.SphereGeometry(1.01, 16, 12);
+        const wMat = new THREE.MeshBasicMaterial({ color: 0x4ECAFF, wireframe: true, transparent: true, opacity: .12 });
+        orbWire = new THREE.Mesh(wGeo, wMat);
+        orbScene.add(orbWire);
+
+        orbScene.add(new THREE.Mesh(new THREE.SphereGeometry(1.18,32,32), new THREE.MeshBasicMaterial({ color: 0x4ECAFF, transparent: true, opacity: .06, side: THREE.BackSide })));
+        orbScene.add(new THREE.AmbientLight(0xffffff, .3));
+        const pl = new THREE.PointLight(0x4ECAFF, 3, 10); pl.position.set(2,1.5,2); orbScene.add(pl);
+        const gl = new THREE.PointLight(0xC6A75E, 1.5, 8); gl.position.set(-2,-1,1); orbScene.add(gl);
+
+        animateOrb();
+
+        const c = document.getElementById('universe-orb-container');
+        c.addEventListener('mouseenter', () => { orbSphere.material.emissiveIntensity = 1.8; orbHovered = true; });
+        c.addEventListener('mouseleave', () => { orbSphere.material.emissiveIntensity = .6; orbHovered = false; });
+        c.addEventListener('click', () => window.location.href = 'brand-universe.html');
+        c.addEventListener('touchstart', () => window.location.href = 'brand-universe.html', { passive: true });
+    }
+
+    function animateOrb() {
+        requestAnimationFrame(animateOrb);
+        const s = orbHovered ? 4.5 : 1;
+        orbTime += .008 * s;
+        orbSphere.rotation.y += .006 * s; orbSphere.rotation.x = Math.sin(orbTime*.5)*.15;
+        orbWire.rotation.y -= .003 * s; orbWire.rotation.x = Math.cos(orbTime*.4)*.1;
+        orbRenderer.render(orbScene, orbCamera);
+    }
+
+    /* ── DASHBOARD LOGIC ── */
+    const PAYSTACK_KEY = 'pk_test_13ce2e5c456a1ce39b28f308941db601fd6561d5';
+    let currentUser = null, brandData = null;
+
+    firebase.auth().onAuthStateChanged(async user => {
+        if (!user) { window.location.href = 'index.html'; return; }
+        currentUser = user;
+        document.getElementById('userAvatar').src        = user.photoURL || 'https://via.placeholder.com/40';
+        document.getElementById('userName').textContent  = user.displayName || 'User';
+        document.getElementById('userEmail').textContent = user.email;
+        await loadBrand();
+    });
+
+    async function loadBrand() {
+        const doc = await firebase.firestore().collection('brands').doc(currentUser.uid).get();
+        if (!doc.exists) { window.location.href = 'brand-onboarding.html'; return; }
+        brandData = doc.data();
+        renderDash();
+        firebase.firestore().collection('brands').doc(currentUser.uid).onSnapshot(d => { brandData = d.data(); renderDash(); });
+    }
+
+    function renderDash() {
+        const d = brandData;
+        document.getElementById('brandAvatar').src         = d.photoURL || 'https://via.placeholder.com/80';
+        document.getElementById('brandName').textContent   = d.brandName || '—';
+        document.getElementById('brandHandle').textContent = '@' + (d.username || '—');
+
+        const pill = document.getElementById('statusPill');
+        if (d.verifiedBadge) {
+            pill.className = 'status-pill status-verified'; pill.innerHTML = '<span class="dot"></span> VERIFIED';
+        } else if (d.activationStatus === 'active') {
+            pill.className = 'status-pill status-active'; pill.innerHTML = '<span class="dot"></span> ACTIVE';
+        } else {
+            pill.className = 'status-pill status-inactive'; pill.innerHTML = '<span class="dot"></span> INACTIVE';
+        }
+
+        const isActive = d.activationStatus === 'active';
+        document.getElementById('activationBanner').classList.toggle('visible', !isActive);
+        ['clicksCard','engageCard','coinsCard','rankCard','influenceCard'].forEach(id => document.getElementById(id).classList.toggle('locked', !isActive));
+
+        document.getElementById('clickCount').textContent      = d.clickCount      || 0;
+        document.getElementById('engagementScore').textContent = d.engagementScore || 0;
+        document.getElementById('coins').textContent           = d.coins            || 0;
+        document.getElementById('rankingPosition').textContent = d.rankingPosition  || '—';
+        document.getElementById('influenceScore').textContent  = d.influenceScore   || 0;
+        document.getElementById('sideClicks').textContent = d.clickCount      || 0;
+        document.getElementById('sideEngage').textContent = d.engagementScore || 0;
+        document.getElementById('sideCoins').textContent  = d.coins            || 0;
+        document.getElementById('sideRank').textContent   = d.rankingPosition  || '—';
+
+        document.getElementById('verifyBtn').disabled     = !isActive;
+        document.getElementById('viewPublicBtn').disabled = !isActive;
+        document.getElementById('boostBtn').disabled      = !isActive;
+
+        if (d.verificationStatus === 'verified') {
+            document.getElementById('verifyBtn').textContent = '✓ Verified'; document.getElementById('verifyBtn').disabled = true;
+        } else if (d.verificationStatus === 'under_review') {
+            document.getElementById('verifyBtn').textContent = 'Verification Pending…'; document.getElementById('verifyBtn').disabled = true;
+        }
+    }
+
+    document.getElementById('activateBtn').addEventListener('click', () => {
+        PaystackPop.setup({ key: PAYSTACK_KEY, email: currentUser.email, amount: 100000, currency: 'NGN',
+            ref: 'ACT-' + currentUser.uid + '-' + Date.now(),
+            callback: async r => {
+                await firebase.firestore().collection('brands').doc(currentUser.uid).update({ activationStatus: 'active', publicVisibility: true, activationPaymentRef: r.reference, activatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                alert('Brand activated!');
+            }, onClose: () => {}
+        }).openIframe();
+    });
+
+    document.getElementById('verifyBtn').addEventListener('click', () => {
+        if (brandData.activationStatus !== 'active') return;
+        if (!confirm('Apply for verification — ₦5,000?')) return;
+        PaystackPop.setup({ key: PAYSTACK_KEY, email: currentUser.email, amount: 500000, currency: 'NGN',
+            ref: 'VER-' + currentUser.uid + '-' + Date.now(),
+            callback: async r => {
+                await firebase.firestore().collection('brands').doc(currentUser.uid).update({ verificationStatus: 'under_review', verificationPaymentRef: r.reference, verificationRequestedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                alert('Verification request submitted!');
+            }, onClose: () => {}
+        }).openIframe();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click',     async () => { await firebase.auth().signOut(); window.location.href = 'index.html'; });
+    document.getElementById('editProfileBtn').addEventListener('click', () => alert('Edit profile — coming soon'));
+    document.getElementById('viewPublicBtn').addEventListener('click',  () => alert('Public profile — coming soon'));
+    document.getElementById('boostBtn').addEventListener('click',       () => alert('Boost — coming soon'));
+
+    window.addEventListener('load', initOrb);
+    </script>
+</body>
+</html>

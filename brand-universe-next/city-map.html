@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Map — Billion Dollar Universe</title>
+    <!-- MapLibre GL CSS -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .panel {
+            position: absolute;
+            background: rgba(4, 10, 24, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(198, 168, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        #info-panel {
+            bottom: 20px;
+            left: 20px;
+            max-width: 320px;
+            min-width: 280px;
+            display: none;
+        }
+        #info-panel.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        #building-panel {
+            bottom: 20px;
+            right: 20px;
+            max-width: 320px;
+            max-height: 70vh;
+            overflow-y: auto;
+            display: none;
+        }
+        #building-panel.active {
+            display: block;
+            animation: slideInRight 0.3s ease-out;
+        }
+        .panel h3 {
+            margin: 0 0 12px 0;
+            color: #C6A85E;
+            font-size: 1.2em;
+        }
+        .panel p {
+            margin: 8px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .btn {
+            background: linear-gradient(135deg, #C6A85E, #B3953D);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 12px;
+            width: 100%;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(198, 168, 94, 0.4);
+        }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .btn-close {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            margin-top: 8px;
+        }
+        .btn-close:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .building-option {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .building-option:hover {
+            background: rgba(255,255,255,0.12);
+        }
+        .building-option h4 {
+            margin: 0 0 4px 0;
+            color: #C6A85E;
+        }
+        .building-cost {
+            color: #FF6B6B;
+            font-weight: bold;
+        }
+        .building-points {
+            color: #4ECDC4;
+            font-size: 0.9em;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(4,10,24,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px 16px;
+            display: flex;
+            gap: 16px;
+            color: #aaa;
+            font-size: 0.85em;
+            z-index: 5;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .color-box { width: 12px; height: 12px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Parcel Info Panel -->
+    <div id="info-panel" class="panel">
+        <h3 id="info-district">District Name</h3>
+        <p><strong>Zone:</strong> <span id="info-zone"></span></p>
+        <p><strong>Price:</strong> <span id="info-price" class="building-cost"></span> coins</p>
+        <button id="btn-purchase" class="btn">Claim Parcel</button>
+        <button id="btn-close-info" class="btn btn-close">Close</button>
+    </div>
+
+    <!-- Building Construction Panel -->
+    <div id="building-panel" class="panel">
+        <h3>Construct Building</h3>
+        <div id="building-options"></div>
+        <button id="btn-close-building" class="btn btn-close">Close</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item"><div class="color-box" style="background:#FFD700"></div> Available</div>
+        <div class="legend-item"><div class="color-box" style="background:#C6A85E"></div> Owned</div>
+    </div>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+    <script src="../scripts/firebase-config.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+    <!-- City Worlds modules -->
+    <script type="module">
+        import { CityWorldsRenderer } from './js/cityworlds/mapRenderer.js';
+        import { PurchaseManager } from './js/cityworlds/purchaseManager.js';
+        import { BuildingManager } from './js/cityworlds/buildingManager.js';
+        import { getBalance, setBalance, renderBalanceHUD } from './js/economy/currency.js';
+
+        // Get cityId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const cityId = urlParams.get('cityId') || 'LAG_001';
+
+        // Wait for Firebase Auth to be ready
+        const auth = firebase.auth();
+        const user = await new Promise((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((u) => {
+            unsubscribe();
+            resolve(u);
+          });
+        });
+
+        if (!user) {
+            document.body.innerHTML = '<div style="padding:40px; text-align:center; color:white;">Please <a href="/">log in</a> to access City Worlds.</div>';
+            throw new Error('Not authenticated');
+        }
+
+        const userId = user.uid;
+        let userType = 'user'; // default; will determine by checking brand doc
+
+        // Load user's coin balance from Firestore (brands or users collection)
+        async function loadUserData() {
+            try {
+                const brandRef = firebase.firestore().collection('brands').doc(userId);
+                const brandSnap = await brandRef.get();
+                if (brandSnap.exists) {
+                    const data = brandSnap.data();
+                    setBalance(data.coins || 0);
+                    userType = 'brand';
+                    return;
+                }
+                const userRef = firebase.firestore().collection('users').doc(userId);
+                const userSnap = await userRef.get();
+                if (userSnap.exists) {
+                    const data = userSnap.data();
+                    setBalance(data.coins || 0);
+                }
+            } catch (e) {
+                console.error('Error loading user data:', e);
+            }
+        }
+        await loadUserData();
+
+        // Render coin HUD
+        renderBalanceHUD(document.body);
+
+        // Create the City Worlds renderer
+        const renderer = new CityWorldsRenderer(cityId, userId, userType);
+        await renderer.initMap('map');
+
+        // Managers
+        const purchaseMgr = new PurchaseManager(cityId, userId, userType, renderer);
+        const buildingMgr = new BuildingManager(cityId, userId, renderer);
+
+        // UI elements
+        const infoPanel = document.getElementById('info-panel');
+        const buildingPanel = document.getElementById('building-panel');
+        const infoDistrict = document.getElementById('info-district');
+        const infoZone = document.getElementById('info-zone');
+        const infoPrice = document.getElementById('info-price');
+        const btnPurchase = document.getElementById('btn-purchase');
+        const buildingOptions = document.getElementById('building-options');
+
+        let selectedParcelId = null;
+        let selectedPrice = null;
+
+        // Parcel click handler from renderer
+        renderer.onParcelClick = (parcelId, data) => {
+            selectedParcelId = parcelId;
+            if (data.ownerId === userId) {
+                showBuildingPanel();
+            } else if (!data.ownerId) {
+                showInfoPanel(data);
+            } else {
+                alert(`This parcel is owned by ${data.ownerId}`);
+            }
+        };
+
+        function showInfoPanel(data) {
+            infoDistrict.textContent = data.districtName || 'Unknown District';
+            infoZone.textContent = data.zoneType || 'unknown';
+            const price = data.finalPrice || data.basePrice || 0;
+            infoPrice.textContent = price;
+            selectedPrice = price;
+            infoPanel.classList.add('active');
+        }
+
+        function showBuildingPanel() {
+            buildingPanel.classList.add('active');
+            renderBuildingOptions();
+        }
+
+        const BUILDING_TYPES = [
+            { tier: 1, name: 'Billboard', cost: 500, points: 2, type: 'billboard' },
+            { tier: 1, name: 'Kiosk', cost: 800, points: 3, type: 'kiosk' },
+            { tier: 2, name: 'Small Office', cost: 2000, points: 8, type: 'office' },
+            { tier: 2, name: 'Retail Store', cost: 2500, points: 10, type: 'retail' },
+            { tier: 3, name: 'Tower Block', cost: 8000, points: 30, type: 'tower' },
+            { tier: 3, name: 'Headquarters', cost: 15000, points: 60, type: 'hq' }
+            // Landmark (tier 4) is auction-only, not shown here
+        ];
+
+        function renderBuildingOptions() {
+            buildingOptions.innerHTML = '';
+            BUILDING_TYPES.forEach(bt => {
+                const div = document.createElement('div');
+                div.className = 'building-option';
+                div.innerHTML = `
+                    <h4>${bt.name} <small>(Tier ${bt.tier})</small></h4>
+                    <div class="building-cost">Cost: ${bt.cost} coins</div>
+                    <div class="building-points">Points/day: ${bt.points}</div>
+                `;
+                div.addEventListener('click', async () => {
+                    try {
+                        await buildingMgr.construct(selectedParcelId, bt.type, bt.tier, bt.cost, bt.points);
+                        buildingPanel.classList.remove('active');
+                        infoPanel.classList.remove('active');
+                        selectedParcelId = null;
+                    } catch (err) {
+                        alert('Construction failed: ' + err.message);
+                    }
+                });
+                buildingOptions.appendChild(div);
+            });
+        }
+
+        // Event listeners for buttons
+        document.getElementById('btn-purchase').addEventListener('click', async () => {
+            if (!selectedParcelId || selectedPrice === null) return;
+            try {
+                await purchaseMgr.purchaseParcel(selectedParcelId, selectedPrice);
+                infoPanel.classList.remove('active');
+                selectedParcelId = null;
+                selectedPrice = null;
+            } catch (err) {
+                alert('Purchase failed: ' + err.message);
+            }
+        });
+
+        document.getElementById('btn-close-info').addEventListener('click', () => {
+            infoPanel.classList.remove('active');
+            selectedParcelId = null;
+            selectedPrice = null;
+        });
+
+        document.getElementById('btn-close-building').addEventListener('click', () => {
+            buildingPanel.classList.remove('active');
+        });
+
+        // Listen for balance updates (from currency module)
+        window.addEventListener('bdu:coinChange', () => {
+            // Could update a display, but HUD already updates via its own mechanism
+        });
+
+        console.log('City Map initialized for city:', cityId);
+    </script>
+</body>
+</html>
