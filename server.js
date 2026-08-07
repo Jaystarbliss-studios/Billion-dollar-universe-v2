@@ -5,9 +5,13 @@ const app = express();
 const PORT = 3000;
 
 // Serve static files from the root directory
-app.use(express.static(path.join(__dirname, '.')));
+app.use(express.static(path.join(__dirname, '.'), {
+    setHeaders: (res, path) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    }
+}));
 
-app.get('*', (req, res) => {
+app.use((req, res) => {
     // If request ends with .html, or has no extension, fallback to trying to find it
     // otherwise fallback to index.html
     res.sendFile(path.join(__dirname, 'index.html'));

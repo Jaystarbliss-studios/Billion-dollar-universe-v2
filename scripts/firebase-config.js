@@ -34,7 +34,7 @@ SETUP INSTRUCTIONS:
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyB8DRrxKMoDpki0-tZfrRZoMwwFfO-oq8A",
   authDomain: "billion-dollar-universe.firebaseapp.com",
   projectId: "billion-dollar-universe",
   storageBucket: "billion-dollar-universe.firebasestorage.app",
